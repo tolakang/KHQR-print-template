@@ -14,6 +14,7 @@
     "A7": [209.76, 297.64]
   },
   "bleedMm": 3,
+  "scan": { "minQrMm": 20, "minModuleMm": 0.4 },
   "_notes": [
     "Vertical positions follow the vector templates (qr-en/kh-template.svg). The guide image's 98 / 107.6 pt top measures are ~4 pt higher than the templates; with QR top 111.6 the 38 pt QR-to-cap gap and the 127.6 pt baseline-to-bottom measure both hold.",
     "Corner, QR and logo are concentric (center y 178.6).",

@@ -33,6 +33,28 @@ export function Field({ label, hint, children, group }: { label: string; hint?: 
 const inputCls =
   'w-full rounded-md border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20 disabled:bg-stone-100 disabled:text-stone-400'
 
+/** Whole-number input that may be left empty (null). */
+export function OptionalIntInput({ value, onChange, min, placeholder, ariaLabel }: {
+  value: number | null; onChange: (v: number | null) => void; min?: number; placeholder?: string; ariaLabel?: string
+}) {
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      className={inputCls}
+      value={value ?? ''}
+      min={min}
+      step={1}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      onChange={(e) => {
+        const v = parseInt(e.target.value, 10)
+        onChange(Number.isFinite(v) ? Math.max(min ?? -Infinity, v) : null)
+      }}
+    />
+  )
+}
+
 export function NumberInput({ value, onChange, min, max, step = 1, suffix, disabled }: {
   value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; suffix?: string; disabled?: boolean
 }) {

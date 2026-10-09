@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
-import { readWorkbook, guessColumns, matchQrFiles, matchKey } from '../src/core/excel/read'
+import { readWorkbook, guessColumns, matchQrFiles, matchKey, rowsInRange } from '../src/core/excel/read'
 
 function book(rows: unknown[][]): Uint8Array {
   const wb = XLSX.utils.book_new()
@@ -67,5 +67,18 @@ describe('matchQrFiles', () => {
   })
   it('matchKey normalizes', () => {
     expect(matchKey('folder/QR_001 .SVG')).toBe('qr 001')
+  })
+})
+
+describe('row range', () => {
+  const rows = [2, 3, 4, 5, 7].map((excelRow) => ({ excelRow }))
+  it('keeps all rows without bounds', () => {
+    expect(rowsInRange(rows, { from: null, to: null })).toBe(rows)
+  })
+  it('filters by Excel row number, inclusive', () => {
+    expect(rowsInRange(rows, { from: 3, to: 5 }).map((r) => r.excelRow)).toEqual([3, 4, 5])
+    expect(rowsInRange(rows, { from: 5, to: null }).map((r) => r.excelRow)).toEqual([5, 7])
+    expect(rowsInRange(rows, { from: null, to: 3 }).map((r) => r.excelRow)).toEqual([2, 3])
+    expect(rowsInRange(rows, { from: 6, to: 6 })).toEqual([])
   })
 })

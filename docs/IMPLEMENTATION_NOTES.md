@@ -83,15 +83,36 @@ non-QR images, all EC levels, and module-exact coverage.
 - Output: one combined PDF, ZIP of single PDFs named by MID, or ZIP of PDFs split by page
   count. Rows without a usable QR are skipped and listed.
 
+## Added after the first handoff
+
+- **Row range export.** Data panel → "Export rows": first / last **Excel row number**
+  (inclusive; empty = first / last). Rows outside the range are dimmed in the table; the
+  Download button shows "N of M stickers". The range is not persisted and resets when a
+  workbook or sheet is loaded. Logic: `rowsInRange` in `core/excel/read.ts`.
+- **Raster QR resolution rules** (plan §5): refused under 2 px per module, warned under 4
+  (`MIN_MODULE_PX` / `WARN_MODULE_PX` in `core/qr/raster.ts`), measured from the decoded corners.
+- **Logo baked into a raster QR.** Timing, alignment and version modules depend only on the
+  version, so `detectBakedLogo` compares them with a reference symbol; ≥ 3 wrong ones, mostly in
+  the central half, means something was drawn over the code. The file gets a warning and the
+  code is **rebuilt from its payload** (clean modules under the Bakong logo) when that verifies,
+  otherwise the traced matrix is kept. Version 1 codes have no alignment pattern near the centre
+  and cannot be checked (KHQR payloads are far larger).
+- **QR too small to scan** (plan §8 "warning in the export panel"). `core/qr/printSize.ts`;
+  thresholds in `layout.json → scan`: printed QR under **20 mm**, or modules under **0.4 mm**
+  when the module count is known (redrawn raster QRs). The Export panel shows the printed QR
+  size (A7 ≈ 31 mm, a typical 49-module KHQR ≈ 0.64 mm/module → no warning); a too-small size
+  shows a notice and a per-sticker `qr-small` warning. Thresholds are a conservative guess:
+  confirm with the print-and-scan test.
+
 ## Verification so far
 
 | Check | Result |
 | --- | --- |
-| Unit tests (`npm test`) | 59 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel, raster QR |
+| Unit tests (`npm test`) | 67 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size |
 | `pdffonts` / `pdfimages` on samples | 0 fonts, 0 images |
 | `pdfinfo -box` A6 + 3 mm bleed | Media 314.65 × 436.54, Trim 297.64 × 419.53 at 8.50 |
 | QR round trip (`npm run qa:qr`) | 160-char KHQR-style payload decodes with the logo on, EC L/M/Q, at 150 and 72 dpi |
-| Browser e2e (`npm run e2e`, Chromium, production CSP) | Loads in ~1.5 s; Excel + 3 SVG + 2 PNG QRs → 5/6 rows matched (1 has no QR file); A6 + bleed + crop marks downloaded as one PDF and as a ZIP named by MID; no console errors |
+| Browser e2e (`npm run e2e`, Chromium, production CSP) | Loads in ~1.5 s; Excel + 3 SVG + 2 PNG QRs → 5/6 rows matched (1 has no QR file); A6 + bleed + crop marks downloaded as one PDF and as a ZIP named by MID; rows 2–4 range gives a 3-page PDF; Print loads the PDF into the print frame; no console errors |
 | Downloaded PDF | 0 fonts, 0 images, 5 pages, boxes correct; all 5 QRs decode at 150 dpi (2 were PNG uploads redrawn as vector) |
 | 1,000 stickers (`tools/perf.ts`, Node) | A6 + bleed: export 21.7 s, PDF 20.1 MB, 1,000 pages, 0 fonts, peak RSS ~1.2 GB |
 | Docker image build | Not run yet (no Docker daemon in the build sandbox); verify on Dokploy |
