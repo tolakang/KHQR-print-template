@@ -7,7 +7,7 @@ export interface Layout {
   qr: { size: number; x: number; y: number }
   logo: { size: number; x: number; y: number }
   name: { baselineY: number; lineGap: number; sizePt: number }
-  mid: { gapFromName: number; sizePt: number }
+  mid: { gapFromName: number; sizePt: number; prefix: string; position: 'follow' | 'fixed' }
   safeMarginPt: number
   pageSizesPt: Record<string, [number, number]>
   bleedMm: number

@@ -15,6 +15,17 @@ describe('layout guide numbers', () => {
     expect(lc[0]).toBeCloseTo(qc[0], 1)
     expect(lc[1]).toBeCloseTo(qc[1], 1)
   })
+  it('corner, QR and logo are concentric', () => {
+    const cy = (b: { y: number; size: number }) => b.y + b.size / 2
+    expect(cy(layout.corner)).toBeCloseTo(cy(layout.qr), 1)
+    expect(cy(layout.logo)).toBeCloseTo(cy(layout.qr), 1)
+    expect(layout.corner.x + layout.corner.size / 2).toBeCloseTo(158.75, 1)
+  })
+  it('guide gaps hold: 38pt QR-to-cap and 127.6pt baseline-to-bottom', () => {
+    const capH = 16.3 // Nunito Sans ExtraBold cap height at 23pt
+    expect(layout.name.baselineY - capH - (layout.qr.y + layout.qr.size)).toBeCloseTo(38, 0)
+    expect(layout.artboard.h - layout.name.baselineY).toBeCloseTo(127.6, 1)
+  })
   it('limits', () => {
     expect(limits).toEqual({ nameChars: 25, nameLines: 2, mid: 15 })
   })
