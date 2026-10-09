@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useUi } from './store/ui'
 import { FlowView } from './ui/flow'
 import { useApp } from './store/app'
-import { AssetsPanel, DataPanel, TypographyPanel, ExportPanel } from './ui/panels'
+import { SettingsTabs } from './ui/settingsTabs'
 import { Preview, RowsTable } from './ui/preview'
 import { ExportBar } from './ui/exportBar'
 import { Shield } from './ui/icons'
@@ -71,12 +71,9 @@ export default function App() {
         <main className="order-1 h-[72vh] min-h-0 md:order-none md:col-start-2 md:row-start-1 md:h-auto">
           <Preview />
         </main>
-        <aside className="order-2 flex flex-col gap-7 p-4 sm:p-6 md:order-none md:col-start-1 md:row-span-2 md:row-start-1 md:overflow-y-auto md:pr-3">
-          <AssetsPanel />
-          <DataPanel />
-          <TypographyPanel />
-          <ExportPanel />
-          <p className="px-1 text-[11px] leading-snug text-stone-400">
+        <aside className="order-2 flex flex-col gap-3 p-4 sm:p-6 md:order-none md:col-start-1 md:row-span-2 md:row-start-1 md:min-h-0 md:pr-3">
+          <SettingsTabs />
+          <p className="shrink-0 px-1 text-[11px] leading-snug text-stone-400">
             Fonts are SIL Open Font License (Nunito Sans, Nokora and the other name fonts). Output PDFs contain vector paths only: no fonts, no images.
           </p>
         </aside>

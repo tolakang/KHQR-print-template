@@ -1,10 +1,20 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useContext, useRef, useState, type ReactNode } from 'react'
+import { PlainSection } from './sectionMode'
 import { useFileDrop } from './useFileDrop'
 import { ChevronDown } from './icons'
 
 /** A settings card. `action` sits in the header (e.g. a Reset button) and stays visible when collapsed. */
 export function Section({ title, icon, children, defaultOpen = true, badge, action }: { title: string; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; badge?: ReactNode; action?: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
+  // In the tabbed panel the tab is the header; only the body (and its action) is shown.
+  if (useContext(PlainSection)) {
+    return (
+      <div className="space-y-4">
+        {action && <div className="-mb-1 flex justify-end">{action}</div>}
+        {children}
+      </div>
+    )
+  }
   return (
     <section className="shrink-0 overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.10)]">
       <div className="relative">

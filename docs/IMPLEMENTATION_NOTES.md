@@ -180,6 +180,10 @@ through the same factor.
   (`--color-canvas`); the preview, its warnings and the rows table share that canvas with no
   dividers. Header shows the KHQR wordmark (`public/artwork/khqr-logo.svg`, taken from a5.svg).
   Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
+- **Settings tabs** (`src/ui/settingsTabs.tsx`): in Cards view the four sections share one
+  panel with a tab bar (Assets · Data · Typography · Export; Data shows the row count). The
+  open tab is remembered (`settingsTab` in the `khqr-ui` store). Panels render without their
+  own card inside the tabs (`PlainSection` context); the Typography Reset sits at the top.
 - **Flow view** (`src/ui/flow.tsx`, React Flow `@xyflow/react` 12): a Cards / Flow switch in
   the header (desktop and phones; phones open zoomed to the Preview node, no minimap). The same
   Assets, Data, Typography and Export panels, the Preview, a Download node and the rows table
