@@ -38,7 +38,8 @@ function printPdf(bytes: Uint8Array) {
   document.body.appendChild(f)
 }
 
-export function ExportBar() {
+/** Download / Print buttons with progress. `stacked` lays them out full width (Download node). */
+export function ExportBar({ stacked = false }: { stacked?: boolean } = {}) {
   const ready = useApp((s) => s.ready)
   const hasSheet = useApp((s) => s.sheets.length > 0)
   const s = useSettings((x) => x.s)
@@ -78,6 +79,34 @@ export function ExportBar() {
   }
 
   const label = hasSheet ? `${rows.length}${rows.length < allRows.length ? ` of ${allRows.length}` : ''} sticker${rows.length === 1 ? '' : 's'}` : 'sample'
+  if (stacked) {
+    return (
+      <div className="space-y-2">
+        <button type="button" className={`${btnCls('primary')} w-full`} disabled={!ready || !!busy} onClick={() => run('download')}>
+          <Download className="h-4 w-4" />Download PDF <span className="font-medium opacity-80">({label})</span>
+        </button>
+        <button type="button" className={`${btnCls('secondary')} w-full`} disabled={!ready || !!busy} onClick={() => run('print')}>
+          <Printer className="h-4 w-4" />Print…
+        </button>
+        {busy && (
+          <div className="flex items-center gap-2">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={busy.done} aria-valuemax={busy.total}>
+              <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${(100 * busy.done) / Math.max(1, busy.total)}%` }} />
+            </div>
+            <span className="text-xs tabular-nums text-stone-600">{busy.done}/{busy.total}</span>
+            <button type="button" className={btnCls('ghost')} onClick={() => cancelRef.current()}>Cancel</button>
+          </div>
+        )}
+        {result && !busy && (
+          <p className="text-xs text-stone-500">
+            {result.pages} pages in {(result.ms / 1000).toFixed(1)} s
+            {result.skipped.length > 0 && <span className="text-amber-700"> · {result.skipped.length} skipped (no QR)</span>}
+          </p>
+        )}
+        {err && <p className="text-xs text-brand">{err}</p>}
+      </div>
+    )
+  }
   return (
     <div className="flex items-center gap-2">
       {busy ? (

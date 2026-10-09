@@ -142,9 +142,10 @@ non-QR images, all EC levels, and module-exact coverage.
   Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
 - **Flow view** (`src/ui/flow.tsx`, React Flow `@xyflow/react` 12): a Cards / Flow switch in
   the header (desktop and phones; phones open zoomed to the Preview node, no minimap). The same
-  Assets, Data, Typography and Export panels, the Preview and the rows table become nodes on a
-  dotted #f0f0f0 canvas. Assets, Data and Typography each wire into the Preview, the Preview
-  into Export, and Data into the rows table; every wire has its own output and input point. Nodes are dragged by their title
+  Assets, Data, Typography and Export panels, the Preview, a Download node and the rows table
+  become nodes on a dotted #f0f0f0 canvas. Assets, Data, Typography and Export (page size, bleed)
+  each wire into the Preview, the Preview into Download (Download PDF / Print, progress, result),
+  and Data into the rows table; every wire has its own output and input point. Nodes are dragged by their title
   strip so every control inside stays usable; positions are kept in localStorage (`khqr-ui`),
   with a "Reset layout" button, zoom controls and a minimap. The engine and settings are shared,
   so switching views changes nothing in the output.

@@ -23,8 +23,8 @@ export const useUi = create<UiState>()(
     }),
     {
       name: 'khqr-ui',
-      version: 2,
-      // v2 removed the Sticker node and moved the Preview: start from the new default layout.
+      version: 3,
+      // v2 removed the Sticker node; v3 moved Export to the inputs and added Download: start from the new default layout.
       migrate: (old) => ({ ...(old as UiState), positions: {} }),
     },
   ),

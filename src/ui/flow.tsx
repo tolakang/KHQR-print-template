@@ -1,7 +1,7 @@
 /**
  * Flow view: the same panels as the card layout, arranged as nodes on a
- * pan-and-zoom canvas (React Flow). Assets, Data and Typography each wire into
- * the Preview, which wires into Export; Data also feeds the rows table. Node positions are kept
+ * pan-and-zoom canvas (React Flow). Assets, Data, Typography and Export each
+ * wire into the Preview, which wires into Download; Data also feeds the rows table. Node positions are kept
  * per browser; the engine and the settings are shared with the card view.
  */
 import { useCallback, useRef, useState, type ReactNode } from 'react'
@@ -13,18 +13,20 @@ import '@xyflow/react/dist/style.css'
 import { useUi } from '../store/ui'
 import { AssetsPanel, DataPanel, TypographyPanel, ExportPanel } from './panels'
 import { Preview, RowsTable } from './preview'
-import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset } from './icons'
+import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset, Download as DownloadIcon } from './icons'
+import { ExportBar } from './exportBar'
 import { btnCls } from './controls'
 
-type Kind = 'assets' | 'data' | 'typography' | 'preview' | 'export' | 'rows'
+type Kind = 'assets' | 'data' | 'typography' | 'export' | 'preview' | 'download' | 'rows'
 type FlowNodeData = { kind: Kind }
 
 const DEFAULT_LAYOUT: Record<Kind, { x: number; y: number }> = {
   assets: { x: 0, y: 0 },
+  export: { x: 0, y: 900 },
   data: { x: 420, y: 0 },
   typography: { x: 420, y: 1080 },
   preview: { x: 900, y: 0 },
-  export: { x: 1540, y: 0 },
+  download: { x: 1540, y: 0 },
   rows: { x: 900, y: 820 },
 }
 
@@ -34,19 +36,21 @@ const DEFAULT_LAYOUT: Record<Kind, { x: number; y: number }> = {
  */
 interface Port { id: string; top: string }
 const INPUTS: Partial<Record<Kind, Port[]>> = {
-  preview: [{ id: 'assets', top: '18%' }, { id: 'data', top: '30%' }, { id: 'typography', top: '42%' }],
-  export: [{ id: 'preview', top: '96px' }],
+  preview: [{ id: 'assets', top: '16%' }, { id: 'data', top: '27%' }, { id: 'typography', top: '38%' }, { id: 'export', top: '49%' }],
+  download: [{ id: 'preview', top: '56px' }],
   rows: [{ id: 'data', top: '50%' }],
 }
 const OUTPUTS: Partial<Record<Kind, Port[]>> = {
   assets: [{ id: 'preview', top: '120px' }],
+  export: [{ id: 'preview', top: '56px' }],
   data: [{ id: 'preview', top: '120px' }, { id: 'rows', top: '220px' }],
   typography: [{ id: 'preview', top: '56px' }],
-  preview: [{ id: 'export', top: '96px' }],
+  preview: [{ id: 'download', top: '56px' }],
 }
 
+// Settings (assets, data, typography, export) feed the Preview; the Preview feeds Download.
 const EDGES: Edge[] = [
-  ['assets', 'preview'], ['data', 'preview'], ['typography', 'preview'], ['preview', 'export'], ['data', 'rows'],
+  ['assets', 'preview'], ['data', 'preview'], ['typography', 'preview'], ['export', 'preview'], ['preview', 'download'], ['data', 'rows'],
 ].map(([source, target]) => ({
   id: `${source}-${target}`,
   source,
@@ -86,6 +90,17 @@ function FlowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         <div className="w-[560px]">
           <Grip icon={<ImageIcon className="h-3.5 w-3.5" />} title="Preview" />
           <div className={`${card} nowheel h-[740px] overflow-hidden bg-canvas`}><Preview /></div>
+        </div>
+      )
+      break
+    case 'download':
+      body = (
+        <div className="w-[340px]">
+          <Grip icon={<DownloadIcon className="h-3.5 w-3.5" />} title="Download" />
+          <div className={`${card} space-y-3 p-4`}>
+            <p className="text-xs leading-snug text-stone-500">Builds the PDF from the preview settings: download it, or open the print dialog.</p>
+            <ExportBar stacked />
+          </div>
         </div>
       )
       break
