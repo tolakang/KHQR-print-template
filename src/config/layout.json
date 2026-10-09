@@ -1,23 +1,77 @@
 {
-  "artboard": { "w": 317.5, "h": 427.5 },
-  "corner": { "size": 154.3, "x": 81.6, "y": 101.45, "stroke": 2.7, "arm": 37.02, "radius": 13.25, "color": "#939598" },
-  "qr": { "size": 134, "x": 91.75, "y": 111.6 },
-  "logo": { "size": 32, "x": 142.75, "y": 162.6 },
-  "name": { "baselineY": 299.9, "lineGap": 11.8, "sizePt": 23 },
-  "mid": { "gapFromName": 17, "sizePt": 10, "prefix": "MID: ", "position": "follow" },
-  "safeMarginPt": 20,
+  "artboard": {
+    "w": 297.6378,
+    "h": 419.5276
+  },
+  "corner": {
+    "size": 151.422,
+    "x": 73.108,
+    "y": 99.558,
+    "stroke": 2.65,
+    "arm": 36.33,
+    "radius": 13.003,
+    "color": "#939598"
+  },
+  "qr": {
+    "size": 131.501,
+    "x": 83.068,
+    "y": 109.519
+  },
+  "logo": {
+    "size": 31.403,
+    "x": 133.117,
+    "y": 159.568
+  },
+  "name": {
+    "baselineY": 294.307,
+    "lineGap": 11.58,
+    "sizePt": 22.571
+  },
+  "mid": {
+    "gapFromName": 16.683,
+    "sizePt": 9.814,
+    "prefix": "MID: ",
+    "position": "follow"
+  },
+  "safeMarginPt": 12.656,
   "pageSizesPt": {
-    "A3": [841.89, 1190.55],
-    "A4": [595.28, 841.89],
-    "A5": [419.53, 595.28],
-    "A6": [297.64, 419.53],
-    "A7": [209.76, 297.64]
+    "A3": [
+      841.8898,
+      1190.5512
+    ],
+    "A4": [
+      595.2756,
+      841.8898
+    ],
+    "A5": [
+      419.5276,
+      595.2756
+    ],
+    "A6": [
+      297.6378,
+      419.5276
+    ],
+    "A7": [
+      209.7638,
+      297.6378
+    ]
   },
   "bleedMm": 3,
-  "scan": { "minQrMm": 20, "minModuleMm": 0.4 },
+  "scan": {
+    "minQrMm": 20,
+    "minModuleMm": 0.4
+  },
   "_notes": [
-    "Vertical positions follow the vector templates (qr-en/kh-template.svg). The guide image's 98 / 107.6 pt top measures are ~4 pt higher than the templates; with QR top 111.6 the 38 pt QR-to-cap gap and the 127.6 pt baseline-to-bottom measure both hold.",
-    "Corner, QR and logo are concentric (center y 178.6).",
-    "Name line pitch = cap height + lineGap; MID cap top = last name baseline + gapFromName (MID follows a one-line name, as in the KH template)."
-  ]
+    "Artboard = A6 exactly (105 x 148 mm = 297.6378 x 419.5276 pt; 1 pt = 25.4/72 mm). It is also the default page size.",
+    "Every guide number was scaled from the original 317.5 x 427.5 pt design by 419.5276 / 427.5 = 0.981351 (x re-centred), so QR, frame, logo and text keep their place on the A-proportioned background artwork (which now fills the page with no side strips).",
+    "Original guide values: QR 134 pt at (91.75, 111.6), frame 154.3 at (81.6, 101.45), logo 32 at (142.75, 162.6), name 23 pt baseline 299.9 / gap 11.8, MID 10 pt gap 17, safe margin 20.",
+    "Corner, QR and logo are concentric. Name line pitch = cap height + lineGap; MID cap top = last name baseline + gapFromName."
+  ],
+  "designScale": {
+    "from": {
+      "w": 317.5,
+      "h": 427.5
+    },
+    "factor": 0.981351
+  }
 }

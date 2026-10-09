@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
+import { layout } from '../src/config'
 import { readFileSync } from 'node:fs'
 import { wrapName, formatMid, charCount, toUnits } from '../src/core/text/wrap'
 import { loadFont, outlineLine, splitRuns, type LoadedFont } from '../src/core/text/outline'
@@ -116,11 +117,12 @@ describe('outline', () => {
 })
 
 describe('width-aware wrapping (guide sample)', () => {
+  // A6 design: name size and safe width are the guide values × 0.981351, so wrapping is unchanged.
   it('"The Pizza Company Sihanou" wraps to 2 lines at 23pt within the safe width', () => {
     const latin = loadFont(readFileSync('public/fonts/NunitoSans-ExtraBold.ttf'))
     const khmer = loadFont(readFileSync('public/fonts/Nokora-SemiBold.ttf'))
-    const safe = 317.5 - 2 * 20
-    const r = wrapName('The Pizza Company Sihanou', 25, 2, (l) => outlineLine(l, { latin, khmer }, 23).width <= safe)
+    const safe = layout.artboard.w - 2 * layout.safeMarginPt
+    const r = wrapName('The Pizza Company Sihanou', 25, 2, (l) => outlineLine(l, { latin, khmer }, layout.name.sizePt).width <= safe)
     expect(r.lines).toEqual(['The Pizza Company', 'Sihanou'])
     expect(r.dropped).toBe(false)
   })

@@ -109,7 +109,7 @@ await page.waitForSelector('aside', { timeout: 5000 })
 console.log('flow view ok')
 
 // Export: A6 with bleed and crop marks
-await page.locator('select').filter({ hasText: 'Original' }).selectOption('A6')
+await page.locator('select').filter({ hasText: 'A6 (105' }).selectOption('A6')
 await page.getByRole('radio', { name: 'With bleed' }).click()
 await page.getByText('Crop marks', { exact: true }).click()
 await page.waitForFunction(() => document.body.innerText.includes('338.65') && !document.body.innerText.includes('Updating…'), null, { timeout: 15000 })
@@ -164,7 +164,7 @@ const cornerHtml = await page.locator('.preview-page').innerHTML()
 if (!cornerHtml.includes('#d22026')) throw new Error('corner color not applied')
 await page.screenshot({ path: join(out, '4g-corner.png') })
 await page.getByRole('button', { name: 'Reset to default' }).click()
-if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.25') throw new Error('corner reset failed')
+if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.003') throw new Error('corner reset failed')
 console.log('corner controls ok')
 
 // Drag and drop an SVG onto the corner frame card

@@ -1,51 +1,68 @@
 import { describe, it, expect } from 'vitest'
 import { layout, limits, fitScale, mmToPt, scaleToTarget } from '../src/config'
 
-describe('layout guide numbers', () => {
-  it('artboard is 317.5 x 427.5', () => {
-    expect(layout.artboard).toEqual({ w: 317.5, h: 427.5 })
+const PT = 72 / 25.4 // pt per mm
+const K = (148 * PT) / 427.5 // original 317.5 × 427.5 design → A6
+const CX = (105 * PT) / 2
+
+describe('layout guide numbers (A6 design)', () => {
+  it('artboard is A6 exactly: 105 × 148 mm = 297.6378 × 419.5276 pt', () => {
+    expect(layout.artboard.w).toBeCloseTo(105 * PT, 3)
+    expect(layout.artboard.h).toBeCloseTo(148 * PT, 3)
+    expect(layout.designScale?.factor).toBeCloseTo(K, 5)
   })
-  it('QR is centered at 91.7 from each side', () => {
-    expect(layout.qr.x * 2 + layout.qr.size).toBeCloseTo(317.5, 6)
-    expect(layout.qr.x + layout.qr.size / 2).toBeCloseTo(158.75, 0)
+  it('every element is the original guide value × 0.981351, re-centred', () => {
+    const X = (x: number) => (x - 158.75) * K + CX
+    expect(layout.qr.size).toBeCloseTo(134 * K, 2)
+    expect(layout.qr.x).toBeCloseTo(X(91.75), 2)
+    expect(layout.qr.y).toBeCloseTo(111.6 * K, 2)
+    expect(layout.corner.size).toBeCloseTo(154.3 * K, 2)
+    expect(layout.logo.size).toBeCloseTo(32 * K, 2)
+    expect(layout.name.sizePt).toBeCloseTo(23 * K, 2)
+    expect(layout.mid.sizePt).toBeCloseTo(10 * K, 2)
+    expect(layout.artboard.w - 2 * layout.safeMarginPt).toBeCloseTo(277.5 * K, 2)
+  })
+  it('QR is centred', () => {
+    expect(layout.qr.x * 2 + layout.qr.size).toBeCloseTo(layout.artboard.w, 2)
   })
   it('logo is centered on QR', () => {
-    const qc = [layout.qr.x + 67, layout.qr.y + 67]
-    const lc = [layout.logo.x + 16, layout.logo.y + 16]
-    expect(lc[0]).toBeCloseTo(qc[0], 1)
-    expect(lc[1]).toBeCloseTo(qc[1], 1)
+    const h = layout.qr.size / 2
+    expect(layout.logo.x + layout.logo.size / 2).toBeCloseTo(layout.qr.x + h, 1)
+    expect(layout.logo.y + layout.logo.size / 2).toBeCloseTo(layout.qr.y + h, 1)
   })
   it('corner, QR and logo are concentric', () => {
     const cy = (b: { y: number; size: number }) => b.y + b.size / 2
     expect(cy(layout.corner)).toBeCloseTo(cy(layout.qr), 1)
     expect(cy(layout.logo)).toBeCloseTo(cy(layout.qr), 1)
-    expect(layout.corner.x + layout.corner.size / 2).toBeCloseTo(158.75, 1)
+    expect(layout.corner.x + layout.corner.size / 2).toBeCloseTo(CX, 1)
   })
-  it('guide gaps hold: 38pt QR-to-cap and 127.6pt baseline-to-bottom', () => {
-    const capH = 16.3 // Nunito Sans ExtraBold cap height at 23pt
-    expect(layout.name.baselineY - capH - (layout.qr.y + layout.qr.size)).toBeCloseTo(38, 0)
-    expect(layout.artboard.h - layout.name.baselineY).toBeCloseTo(127.6, 1)
+  it('guide gaps scale too: 38 pt QR-to-cap and 127.6 pt baseline-to-bottom', () => {
+    const capH = 16.3 * K // Nunito Sans ExtraBold cap height at the name size
+    expect(layout.name.baselineY - capH - (layout.qr.y + layout.qr.size)).toBeCloseTo(38 * K, 0)
+    expect(layout.artboard.h - layout.name.baselineY).toBeCloseTo(127.6 * K, 1)
   })
   it('limits', () => {
     expect(limits).toEqual({ nameChars: 25, nameLines: 2, mid: 15 })
   })
 })
 
-describe('scaling', () => {
-  it('A6 trim equals exact 297.64 x 419.53', () => {
-    expect(layout.pageSizesPt.A6).toEqual([297.64, 419.53])
+describe('page sizes (mm × 72 / 25.4)', () => {
+  it.each([
+    ['A3', 297, 420], ['A4', 210, 297], ['A5', 148, 210], ['A6', 105, 148], ['A7', 74, 105],
+  ] as const)('%s = %d × %d mm', (name, w, h) => {
+    const [pw, ph] = layout.pageSizesPt[name]
+    expect(pw).toBeCloseTo(w * PT, 3)
+    expect(ph).toBeCloseTo(h * PT, 3)
   })
-  it('A6 fit scale about 93.75%', () => {
+  it('A6 is the design size: scale 1', () => {
     const [w, h] = layout.pageSizesPt.A6
-    expect(fitScale(w, h)).toBeCloseTo(0.9375, 3)
+    expect(fitScale(w, h)).toBeCloseTo(1, 4)
   })
-  it('3mm bleed = 8.50pt', () => {
+  it('3mm bleed = 8.504 pt; A6 + 3 mm bleed = 314.65 × 436.54', () => {
     expect(mmToPt(3)).toBeCloseTo(8.504, 3)
-  })
-  it('A6 + 3mm bleed = 314.65 x 436.54', () => {
     const [w, h] = layout.pageSizesPt.A6
-    expect(w + 2 * mmToPt(3)).toBeCloseTo(314.65, 1)
-    expect(h + 2 * mmToPt(3)).toBeCloseTo(436.54, 1)
+    expect(w + 2 * mmToPt(3)).toBeCloseTo(314.646, 2)
+    expect(h + 2 * mmToPt(3)).toBeCloseTo(436.535, 2)
   })
   it('scaleToTarget handles larger and smaller', () => {
     expect(scaleToTarget(268, 268, 134)).toBe(0.5)

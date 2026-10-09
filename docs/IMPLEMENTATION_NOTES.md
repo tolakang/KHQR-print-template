@@ -115,6 +115,20 @@ non-QR images, all EC levels, and module-exact coverage.
   shows a notice and a per-sticker `qr-small` warning. Thresholds are a conservative guess:
   confirm with the print-and-scan test.
 
+## A6 design size
+
+The sticker is now designed at A6 exactly: 105 × 148 mm = 297.6378 × 419.5276 pt
+(1 pt = 25.4 / 72 mm; every page size is computed that way). The original guide was
+317.5 × 427.5 pt, wider than the A-proportioned background (a5.svg), which left ~7.1 pt (2.5 mm)
+side strips filled with edge bands at the old "Original" size. All guide numbers were scaled by
+419.5276 / 427.5 = 0.981351 with x re-centred: QR 131.5 pt, frame 151.42 pt, logo 31.4 pt, name
+22.57 pt, MID 9.81 pt, safe margin 12.66 pt, corner radius 13.0 pt. Text wraps exactly as before
+(sizes and safe width scale together). A6 is the default page size; "Original" is gone from the
+page list (it equals A6); saved old defaults (23 / 10 pt, margin 20, radius 13.25, Original) are
+migrated. Artwork within 0.5 % of the trim's shape fills it exactly (a5.svg is 1241 × 1749, 0.03 %
+off), so A3–A7 have no edge bands. Template-conformance tests map the template's measurements
+through the same factor.
+
 ## UI refresh and fixes (after the first deploy)
 
 - **Blank Bakong logo** (`public/artwork/bkw.svg`): the logo shape filled all white (a plain

@@ -111,7 +111,12 @@ export function buildPage(
   // Background: one uniform scale fitted inside the trim box (never enlarged for bleed).
   if (background) {
     const bg = background.scene
-    const { m } = fitMatrix({ x: 0, y: 0, w: bg.width, h: bg.height }, g.trim)
+    let { m } = fitMatrix({ x: 0, y: 0, w: bg.width, h: bg.height }, g.trim)
+    // Artwork within 0.5 % of the trim's shape (e.g. a5.svg's 1241 × 1749 on an A size)
+    // fills it exactly instead of leaving sub-point slivers to band-fill.
+    const sx = g.trim.w / bg.width
+    const sy = g.trim.h / bg.height
+    if (Math.abs(sx / sy - 1) <= 0.005) m = [sx, 0, 0, sy, g.trim.x, g.trim.y]
     const placed = transformItems(bg.items, m)
     const bgRect: Rect = {
       x: m[4], y: m[5], w: bg.width * m[0], h: bg.height * m[3],

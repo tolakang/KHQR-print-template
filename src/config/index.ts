@@ -12,6 +12,8 @@ export interface Layout {
   safeMarginPt: number
   pageSizesPt: Record<string, [number, number]>
   bleedMm: number
+  /** How the A6 design was derived from the original 317.5 × 427.5 pt guide. */
+  designScale?: { from: { w: number; h: number }; factor: number }
   /** Below these printed sizes the QR may not scan reliably. */
   scan: { minQrMm: number; minModuleMm: number }
 }

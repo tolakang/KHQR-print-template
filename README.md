@@ -1,7 +1,7 @@
 # KHQR Roll Sticker Generator
 
 Browser-only tool that merges KHQR codes with Excel data into **vector-only PDF** roll
-stickers (Roll Sticker KHQR Single, 317.5 × 427.5 pt). Text is shaped with HarfBuzz
+stickers (Roll Sticker KHQR Single), designed at A6: 105 × 148 mm = 297.638 × 419.528 pt. Text is shaped with HarfBuzz
 (English + Khmer) and outlined; PDFs contain no fonts and no images. Nothing is uploaded
 to a server.
 

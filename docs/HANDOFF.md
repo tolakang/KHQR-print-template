@@ -5,7 +5,7 @@ Status as of 2026-10-09 · Owner: Tola Kang (tolakang) · Repo: `tolakang/KHQR-p
 ## 1. What this is
 
 A static web app that turns **finished KHQR codes + an Excel list of merchants** into
-**print-ready, vector-only PDFs** of the "Roll Sticker KHQR Single" (317.5 × 427.5 pt),
+**print-ready, vector-only PDFs** of the "Roll Sticker KHQR Single", designed at A6 (105 × 148 mm = 297.638 × 419.528 pt; the original guide was 317.5 × 427.5 pt),
 one sticker per page. Everything runs in the user's browser; no file is uploaded to a server.
 It deploys to Dokploy as an nginx container.
 
@@ -109,6 +109,12 @@ what you see is what prints.
 
 ## 6. Decisions you should know before changing anything
 
+0. **The design is A6 (297.638 × 419.528 pt), the default page size.** The guide was drawn at
+   317.5 × 427.5 pt, but the background artwork is A-proportioned, so it left ~7 pt side strips.
+   Every guide number in `layout.json` was scaled by 419.528 / 427.5 = 0.981351 (x re-centred), so
+   QR (now 131.5 pt), frame, logo and text keep their place on the artwork, and the background fills
+   the page exactly. The numbers below are the original guide values; `layout.json → _notes` lists
+   both. Page sizes are exact (mm × 72 / 25.4).
 1. **Vertical positions follow the vector templates, not the guide image's top numbers.**
    The guide's 98 / 107.6 pt measures are ~4 pt off its own 38 pt and 127.6 pt gaps.
    `layout.json` uses QR top 111.6, frame 101.45, logo 162.6. `tests/sticker.test.ts`
