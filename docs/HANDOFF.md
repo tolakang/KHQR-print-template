@@ -26,12 +26,13 @@ where the two differ, the notes win). The guide image is in
 | Raster QR (PNG/JPG) → verified vector | Done, tested |
 | Excel/CSV import, column mapping, QR file matching | Done, tested |
 | Dashboard (Assets, Data, Typography, Export, Preview, rows table) | Done, checked in Chromium |
-| Download (combined / ZIP by MID / split), Print | Download tested e2e (combined + ZIP); Print built but not exercised by tests yet |
+| Download (combined / ZIP by MID / split), Print, row range | Tested e2e (combined, ZIP, range, Print up to the browser dialog) |
+| Raster QR resolution rules, baked-in logo, QR-too-small warning | Done, tested |
 | CI (lint, tests, build, PDF preflight, QR round trip) | Green on GitHub Actions |
 | Docker image / Dokploy deploy | **Written, never built** (no Docker in the dev sandbox) |
 | Real data, real printer, banking-app scan | **Not done**: needs the business side |
 
-Test suite: 59 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
+Test suite: 67 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
 
 ## 3. Run it
 
@@ -132,11 +133,9 @@ what you see is what prints.
 ## 7. Known gaps and risks (honest list)
 
 Not built yet, from the plan:
-- Row range selection for export (exports all rows; rows without a usable QR are skipped).
 - Before/after view of trimmed names in the table (table flags issues; preview shows the result).
-- Raster QR resolution rules (warn < 4 px/module, refuse < 2) and "logo already baked in"
-  warning. Today the rule is simply: must decode and re-verify, else refused.
-- Warning when the QR becomes too small to scan (e.g. A7).
+- The QR-too-small check is a size rule (20 mm / 0.4 mm per module), not a real decode of
+  each exported page at A7; SVG QRs only get the 20 mm rule (module count unknown).
 - Visual regression golden PNGs; settings export/backup; slider controls (numeric inputs only).
 - `qpdf` content-stream scan; CI checks `pdffonts`/`pdfimages` and unit tests assert no
   `/Font` or `/Image` objects instead.
@@ -161,8 +160,8 @@ Risks:
    app; fix any column-guessing or matching issues (`core/excel/read.ts`).
 3. Print one sheet on the roll-sticker printer at 100 %; measure; scan every QR with a
    Cambodian banking app. Have a Khmer reader check several names.
-4. Decide the open product questions: raster logo/background allowed?; row range export?;
-   A7 scan warning threshold.
+4. Decide the open product questions: raster logo/background allowed?; confirm the
+   QR-too-small thresholds (`layout.json → scan`) with the print-and-scan test.
 5. Test Firefox, Safari and Edge; add their projects to the Playwright e2e.
 6. If batches > 1,000 are normal: streaming/flushing PDF writer.
 
@@ -171,7 +170,9 @@ Risks:
 - `npm run lint && npm test && npm run build` (CI does this on every push).
 - `npm run sample` then `pdffonts` and `pdfimages -list` → both list nothing (CI does this).
 - `npm run qa:qr` → all `"ok": true` (CI does this).
-- `npm run e2e` locally (needs Chromium): no console errors, both downloads produced.
+- `npm run e2e` locally (needs Chromium): no console errors, all downloads produced. If
+  Playwright's own browser is missing, point it at a local one:
+  `CHROMIUM_PATH=/path/to/chrome npm run e2e`.
 - Changing layout numbers: update `layout.json`, run `tests/sticker.test.ts`, and add a line to
   IMPLEMENTATION_NOTES.
 

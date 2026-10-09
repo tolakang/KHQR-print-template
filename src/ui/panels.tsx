@@ -2,9 +2,11 @@ import { useMemo } from 'react'
 import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO } from '../store/app'
 import { useSettings, defaultSettings } from '../store/settings'
 import type { AssetKind } from '../engine/types'
-import type { PageSizeName } from '../core/layout/page'
+import { pageGeometry, type PageSizeName } from '../core/layout/page'
+import { qrPrintSize } from '../core/qr/printSize'
+import { rowsInRange } from '../core/excel/read'
 import { layout } from '../config'
-import { Section, Field, NumberInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
+import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 
@@ -92,6 +94,18 @@ export function DataPanel() {
               <Select value={app.cols.qr} onChange={(v) => app.setCols({ qr: v })} options={colOptions} />
             </Field>
           </div>
+          <div className="col-span-2">
+            <Field label="Export rows (Excel row numbers)" group hint={rangeHint(derived.rows.length, rowsInRange(derived.rows, app.range).length, app.range)}>
+              <div className="flex items-center gap-2">
+                <OptionalIntInput value={app.range.from} onChange={(v) => app.setRange({ from: v })} min={1} placeholder={`${derived.rows[0]?.excelRow ?? ''} (first)`} ariaLabel="First row" />
+                <span className="text-xs text-stone-500">to</span>
+                <OptionalIntInput value={app.range.to} onChange={(v) => app.setRange({ to: v })} min={1} placeholder={`${derived.rows.at(-1)?.excelRow ?? ''} (last)`} ariaLabel="Last row" />
+                {(app.range.from !== null || app.range.to !== null) && (
+                  <button type="button" className={btnCls('ghost')} onClick={() => app.setRange({ from: null, to: null })}>All</button>
+                )}
+              </div>
+            </Field>
+          </div>
         </div>
       )}
       <div>
@@ -135,6 +149,12 @@ export function DataPanel() {
   )
 }
 
+function rangeHint(total: number, inRange: number, r: { from: number | null; to: number | null }) {
+  if (r.from === null && r.to === null) return `All ${total} rows are exported. Leave a box empty for first / last.`
+  if (r.from !== null && r.to !== null && r.from > r.to) return 'The first row is after the last row: nothing to export.'
+  return `${inRange} of ${total} rows in range.`
+}
+
 export function TypographyPanel() {
   const s = useSettings((x) => x.s)
   const set = useSettings((x) => x.set)
@@ -172,6 +192,8 @@ const PAGE_SIZES: { value: PageSizeName; label: string }[] = [
 export function ExportPanel() {
   const s = useSettings((x) => x.s)
   const set = useSettings((x) => x.set)
+  const engineOpts = { pageSize: s.pageSize, customMm: s.customMm, bleed: false, bleedMm: 0, cropMarks: false, edgeFill: 'auto' as const }
+  const qrSize = qrPrintSize(pageGeometry(engineOpts).stickerScale)
   return (
     <Section title="Export">
       <Field label="Page size" hint="Artwork scales uniformly to fit, never stretched.">
@@ -182,6 +204,11 @@ export function ExportPanel() {
           <Field label="Width"><NumberInput value={s.customMm.w} onChange={(v) => set({ customMm: { ...s.customMm, w: v } })} min={20} max={1000} suffix="mm" /></Field>
           <Field label="Height"><NumberInput value={s.customMm.h} onChange={(v) => set({ customMm: { ...s.customMm, h: v } })} min={20} max={1000} suffix="mm" /></Field>
         </div>
+      )}
+      {qrSize.tooSmall ? (
+        <Notice>{qrSize.message}</Notice>
+      ) : (
+        <p className="text-[11px] leading-snug text-stone-500">QR prints at {qrSize.qrMm.toFixed(1)} mm.</p>
       )}
       <Field label="Cut" group>
         <Segmented value={s.bleed ? 'bleed' : 'trim'} onChange={(v) => set({ bleed: v === 'bleed' })} options={[{ value: 'trim', label: 'No bleed (trimmed)' }, { value: 'bleed', label: 'With bleed' }]} />

@@ -4,6 +4,7 @@ import { useApp } from '../store/app'
 import { useSettings } from '../store/settings'
 import type { ExportResult } from '../engine/types'
 import { useRows } from './preview'
+import { rowsInRange } from '../core/excel/read'
 import { btnCls } from './controls'
 
 function saveBlob(bytes: Uint8Array, name: string, mime: string) {
@@ -40,7 +41,9 @@ export function ExportBar() {
   const ready = useApp((s) => s.ready)
   const hasSheet = useApp((s) => s.sheets.length > 0)
   const s = useSettings((x) => x.s)
-  const { rows } = useRows()
+  const { rows: allRows } = useRows()
+  const range = useApp((x) => x.range)
+  const rows = hasSheet ? rowsInRange(allRows, range) : allRows
   const [busy, setBusy] = useState<null | { kind: 'download' | 'print'; done: number; total: number }>(null)
   const [result, setResult] = useState<ExportResult | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -56,7 +59,9 @@ export function ExportBar() {
     try {
       const r = await job.promise
       setResult(r)
-      if (!r.files.length) {
+      if (!rows.length) {
+        setErr('Nothing to export: no rows in the selected range.')
+      } else if (!r.files.length) {
         setErr('Nothing to export: no row has a usable QR file.')
       } else if (kind === 'print') {
         printPdf(r.files[0].bytes)
@@ -71,7 +76,7 @@ export function ExportBar() {
     }
   }
 
-  const label = hasSheet ? `${rows.length} sticker${rows.length === 1 ? '' : 's'}` : 'sample'
+  const label = hasSheet ? `${rows.length}${rows.length < allRows.length ? ` of ${allRows.length}` : ''} sticker${rows.length === 1 ? '' : 's'}` : 'sample'
   return (
     <div className="flex items-center gap-2">
       {busy ? (

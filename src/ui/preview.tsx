@@ -106,6 +106,7 @@ export function RowsTable() {
   const select = useApp((s) => s.select)
   const hasSheet = useApp((s) => s.sheets.length > 0)
   const s = useSettings((x) => x.s)
+  const range = useApp((x) => x.range)
   const [issuesOnly, setIssuesOnly] = useState(false)
   const qrMap = useMemo(() => new Map(qrFiles.map((q) => [q.name, q])), [qrFiles])
   const LIMIT = 400
@@ -128,6 +129,7 @@ export function RowsTable() {
     if (r.midImprecise) issues.push('MID precision')
     return { r, q, issues }
   })
+  const inRange = (n: number) => (range.from === null || n >= range.from) && (range.to === null || n <= range.to)
   const list = issuesOnly ? decorated.filter((d) => d.issues.length) : decorated
   const issueCount = decorated.filter((d) => d.issues.length).length
   return (
@@ -155,7 +157,8 @@ export function RowsTable() {
               <tr
                 key={r.index}
                 onClick={() => select(r.index)}
-                className={`cursor-pointer border-b border-stone-100 ${selected === r.index ? 'bg-red-50' : 'hover:bg-stone-50'}`}
+                className={`cursor-pointer border-b border-stone-100 ${selected === r.index ? 'bg-red-50' : 'hover:bg-stone-50'} ${inRange(r.excelRow) ? '' : 'opacity-40'}`}
+                title={inRange(r.excelRow) ? undefined : 'Outside the export range'}
               >
                 <td className="px-3 py-1 tabular-nums text-stone-400">{r.excelRow}</td>
                 <td className="max-w-64 truncate px-3 py-1 text-stone-900" title={r.name}>{r.name || <i className="text-stone-400">empty</i>}</td>
@@ -171,7 +174,7 @@ export function RowsTable() {
             ))}
           </tbody>
         </table>
-        {list.length > LIMIT && <div className="p-2 text-center text-xs text-stone-500">Showing first {LIMIT} of {list.length}. All rows are exported.</div>}
+        {list.length > LIMIT && <div className="p-2 text-center text-xs text-stone-500">Showing first {LIMIT} of {list.length}. Rows in the export range are all exported.</div>}
       </div>
     </div>
   )

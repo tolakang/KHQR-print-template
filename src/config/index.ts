@@ -11,6 +11,8 @@ export interface Layout {
   safeMarginPt: number
   pageSizesPt: Record<string, [number, number]>
   bleedMm: number
+  /** Below these printed sizes the QR may not scan reliably. */
+  scan: { minQrMm: number; minModuleMm: number }
 }
 export interface Limits { nameChars: number; nameLines: number; mid: number }
 

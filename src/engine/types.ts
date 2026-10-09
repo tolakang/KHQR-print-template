@@ -40,6 +40,8 @@ export interface QrFileStatus {
   kind: 'svg' | 'raster'
   method?: 'svg' | 'traced' | 'rebuilt'
   payload?: string
+  /** QR modules per side, when known (redrawn raster QRs). */
+  modules?: number
   error?: string
   warnings: Warning[]
 }

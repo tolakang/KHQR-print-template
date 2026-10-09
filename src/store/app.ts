@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import { engine } from '../engine/client'
 import type { AssetKind, QrFileStatus, RowInput } from '../engine/types'
 import type { Warning } from '../core/scene'
-import { readWorkbook, guessColumns, matchQrFiles, type SheetData, type ColumnMap } from '../core/excel/read'
+import { readWorkbook, guessColumns, matchQrFiles, type SheetData, type ColumnMap, type RowRange } from '../core/excel/read'
 import { useSettings } from './settings'
 
 export interface AssetState {
@@ -34,6 +34,8 @@ interface AppState {
   sheets: SheetData[]
   sheetIndex: number
   cols: ColumnMap
+  /** Export range by Excel row number (not persisted). */
+  range: RowRange
   qrFiles: QrFileStatus[]
   qrBusy: [number, number] | null
   selected: number
@@ -44,6 +46,7 @@ interface AppState {
   loadWorkbook: (file: File) => Promise<void>
   setSheet: (i: number) => void
   setCols: (c: Partial<ColumnMap>) => void
+  setRange: (r: Partial<RowRange>) => void
   addQrFiles: (files: File[]) => Promise<void>
   clearQrFiles: () => Promise<void>
   reprocessRaster: (redraw: boolean) => Promise<void>
@@ -64,6 +67,7 @@ export const useApp = create<AppState>()((set, get) => ({
   sheets: [],
   sheetIndex: 0,
   cols: { name: -1, mid: -1, qr: -1 },
+  range: { from: null, to: null },
   qrFiles: [],
   qrBusy: null,
   selected: -1,
@@ -120,7 +124,7 @@ export const useApp = create<AppState>()((set, get) => ({
       const sheets = readWorkbook(new Uint8Array(await file.arrayBuffer()))
       const idx = Math.max(0, sheets.findIndex((s) => s.rows.length > 0))
       if (!sheets.length || !sheets[idx]?.rows.length) throw new Error('No data rows found.')
-      set({ workbookName: file.name, sheets, sheetIndex: idx, cols: guessColumns(sheets[idx].headers), selected: 0, error: null })
+      set({ workbookName: file.name, sheets, sheetIndex: idx, cols: guessColumns(sheets[idx].headers), range: { from: null, to: null }, selected: 0, error: null })
     } catch (e) {
       set({ error: `${file.name}: ${(e as Error).message}` })
     }
@@ -128,10 +132,12 @@ export const useApp = create<AppState>()((set, get) => ({
 
   setSheet: (i) => {
     const sh = get().sheets[i]
-    if (sh) set({ sheetIndex: i, cols: guessColumns(sh.headers), selected: 0 })
+    if (sh) set({ sheetIndex: i, cols: guessColumns(sh.headers), range: { from: null, to: null }, selected: 0 })
   },
 
   setCols: (c) => set((st) => ({ cols: { ...st.cols, ...c } })),
+
+  setRange: (r) => set((st) => ({ range: { ...st.range, ...r } })),
 
   addQrFiles: async (files) => {
     const accepted = files.filter((f) => /\.(svg|png|jpe?g|webp)$/i.test(f.name))

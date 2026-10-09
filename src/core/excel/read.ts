@@ -134,3 +134,13 @@ export function matchQrFiles(sheet: SheetData, cols: ColumnMap, files: string[])
   })
   return { byRow, unmatchedFiles: files.filter((f) => !used.has(f)), ambiguousRows }
 }
+
+export interface RowRange { from: number | null; to: number | null }
+
+/** Rows whose Excel row number lies in [from, to]; an empty bound means first / last. */
+export function rowsInRange<T extends { excelRow: number }>(rows: T[], range: RowRange): T[] {
+  const lo = range.from ?? -Infinity
+  const hi = range.to ?? Infinity
+  if (lo === -Infinity && hi === Infinity) return rows
+  return rows.filter((r) => r.excelRow >= lo && r.excelRow <= hi)
+}

@@ -10,7 +10,8 @@ import { loadBundle, bundleOutliner, type FontBundle } from '../core/text/fonts'
 import { composeSticker, type StickerOptions, type StickerFonts } from '../core/layout/sticker'
 import { buildPage, prepareBackground, pageGeometry, type ExportOptions, type PreparedBackground } from '../core/layout/page'
 import { PdfBuilder } from '../core/pdf/writer'
-import { redrawRasterQr, type RGBAImage } from '../core/qr/raster'
+import { redrawRasterQr, WARN_MODULE_PX, type RGBAImage } from '../core/qr/raster'
+import { qrPrintSize } from '../core/qr/printSize'
 import { parseColor } from '../core/svg/color'
 import type { Scene, Warning } from '../core/scene'
 import { pageToSvg } from './svgOut'
@@ -87,8 +88,10 @@ export class Engine {
         if (r.ok) {
           scene = r.scene
           const warnings: Warning[] = []
-          if (r.method === 'rebuilt') warnings.push({ code: 'qr-rebuilt', message: 'Image was not clean enough to trace; QR was rebuilt from its decoded payload (same version and EC level).' })
-          status = { name, ok: true, kind: 'raster', method: r.method, payload: r.payload, warnings }
+          if (r.bakedLogo) warnings.push({ code: 'qr-baked-logo', message: `The image already has a logo in the QR; the modules under it are lost${r.method === 'rebuilt' ? ', so the QR was rebuilt from its decoded payload' : ''}. Prefer the QR without a logo.` })
+          else if (r.method === 'rebuilt') warnings.push({ code: 'qr-rebuilt', message: 'Image was not clean enough to trace; QR was rebuilt from its decoded payload (same version and EC level).' })
+          if (r.lowResolution) warnings.push({ code: 'qr-low-res', message: `Low resolution: ${r.modulePx.toFixed(1)} px per QR module (${WARN_MODULE_PX} or more recommended). Check the redraw or upload an SVG.` })
+          status = { name, ok: true, kind: 'raster', method: r.method, payload: r.payload, modules: r.matrix.length, warnings }
         } else {
           status = { name, ok: false, kind: 'raster', error: r.reason, warnings: [] }
         }
@@ -144,6 +147,10 @@ export class Engine {
     else if (!entry) warnings.push({ code: 'qr-missing', message: `QR file “${row.qrFile}” is not loaded.` })
     else if (!entry.scene) warnings.push({ code: 'qr-invalid', message: entry.status.error ?? 'QR file could not be used.' })
     if (entry?.status.warnings.length) warnings.push(...entry.status.warnings)
+    if (entry?.scene) {
+      const size = qrPrintSize(pageGeometry(this.exportOptions(s)).stickerScale, entry.status.modules)
+      if (size.tooSmall && size.message) warnings.push({ code: 'qr-small', message: size.message })
+    }
     if (row.midImprecise) warnings.push({ code: 'mid-precision', message: 'MID was stored as a number in Excel and may have lost digits. Format the MID column as Text.' })
     const qr = entry?.scene ?? null
     const st = composeSticker(

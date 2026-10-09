@@ -69,6 +69,42 @@ describe('raster QR redraw', () => {
     const r = redrawRasterQr(rasterize(matrixOf(PAYLOAD), 8, { quiet: 1 }))
     expect(r.ok).toBe(true)
   })
+  it('warns below 4 px per module and refuses below 2', () => {
+    const m = matrixOf(PAYLOAD)
+    const clean = redrawRasterQr(rasterize(m, 10))
+    expect(clean.ok && clean.lowResolution).toBe(false)
+    const low = redrawRasterQr(rasterize(m, 3))
+    expect(low.ok).toBe(true)
+    if (low.ok) {
+      expect(low.lowResolution).toBe(true)
+      expect(low.modulePx).toBeCloseTo(3, 0)
+    }
+    const tiny = redrawRasterQr(rasterize(m, 1.5))
+    expect(tiny.ok).toBe(false)
+  })
+  it('detects a logo baked into the image and rebuilds the code', () => {
+    const m = matrixOf(PAYLOAD, 'H')
+    const px = 8
+    const img = rasterize(m, px)
+    // White pad with a red square in the middle, ~22% of the code width.
+    const c = img.width / 2
+    const half = (m.length * px * 0.22) / 2
+    for (let y = Math.round(c - half); y < c + half; y++) {
+      for (let x = Math.round(c - half); x < c + half; x++) {
+        const o = (y * img.width + x) * 4
+        const inner = Math.abs(x - c) < half * 0.7 && Math.abs(y - c) < half * 0.7
+        img.data[o] = inner ? 200 : 255
+        img.data[o + 1] = img.data[o + 2] = inner ? 20 : 255
+      }
+    }
+    const r = redrawRasterQr(img)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.payload).toBe(PAYLOAD)
+    expect(r.bakedLogo).toBe(true)
+    expect(r.method).toBe('rebuilt')
+    expect(redrawRasterQr(rasterize(m, px)).ok && redrawRasterQr(rasterize(m, px))).toMatchObject({ bakedLogo: false })
+  })
   it('refuses an image without a QR code', () => {
     const size = 200
     const data = new Uint8ClampedArray(size * size * 4)

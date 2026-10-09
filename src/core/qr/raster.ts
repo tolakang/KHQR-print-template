@@ -8,6 +8,9 @@
  * 4. Otherwise rebuild the matrix from the payload with the same version and
  *    error-correction level ("rebuilt"), and verify that too.
  * 5. Otherwise refuse.
+ * Images under 2 px per module are refused and under 4 px warned about. A logo
+ * baked into the image (wrong timing/alignment modules near the centre) is
+ * warned about, and the matrix is rebuilt from the payload when that verifies.
  * The final matrix is traced into one outline path (no seams between modules).
  */
 import jsQR from 'jsqr'
@@ -30,6 +33,10 @@ export type RedrawResult =
       ecLevel: EcLevel | null
       method: 'traced' | 'rebuilt'
       matrix: Matrix01
+      /** Image pixels per QR module. */
+      modulePx: number
+      lowResolution: boolean
+      bakedLogo: boolean
     }
   | { ok: false; reason: string }
 
@@ -229,25 +236,73 @@ function rebuild(payload: string, version: number, ec: EcLevel): Matrix01 | null
   }
 }
 
+export const MIN_MODULE_PX = 2
+export const WARN_MODULE_PX = 4
+
+/** Pixels per module, from the corners jsQR reports. */
+export function modulePixels(loc: NonNullable<ReturnType<typeof jsQR>>['location'], n: number): number {
+  const d = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(b.x - a.x, b.y - a.y)
+  return (d(loc.topLeftCorner, loc.topRightCorner) + d(loc.topLeftCorner, loc.bottomLeftCorner) + d(loc.topRightCorner, loc.bottomRightCorner) + d(loc.bottomLeftCorner, loc.bottomRightCorner)) / (4 * n)
+}
+
+/**
+ * Timing, alignment and version modules depend only on the version, so a
+ * cluster of wrong ones near the centre means something (a logo) was drawn
+ * over the code. Format-info areas around the finders are not compared.
+ */
+export function detectBakedLogo(m: Matrix01, version: number): boolean {
+  let q
+  try {
+    q = QRCode.create('0', { version, errorCorrectionLevel: 'L' })
+  } catch {
+    return false
+  }
+  const n = q.modules.size
+  if (n !== m.length) return false
+  let wrong = 0
+  let central = 0
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (!q.modules.reservedBit[i * n + j]) continue
+      if ((i < 9 && j < 9) || (i < 9 && j >= n - 8) || (i >= n - 8 && j < 9)) continue
+      if (m[i][j] === !!q.modules.data[i * n + j]) continue
+      wrong++
+      if (Math.abs(i - (n - 1) / 2) <= n / 4 && Math.abs(j - (n - 1) / 2) <= n / 4) central++
+    }
+  }
+  return wrong >= 3 && central >= wrong * 0.6
+}
+
 export function redrawRasterQr(input: RGBAImage): RedrawResult {
   const img = onWhite(input)
   const code = decodeImage(img)
-  if (!code) return { ok: false, reason: 'No readable QR code found in the image.' }
+  if (!code) return { ok: false, reason: 'No readable QR code found in the image (blurry, cropped, too low resolution or damaged).' }
   const n = 17 + 4 * code.version
   const payload = code.data
+  const modulePx = modulePixels(code.location, n)
+  if (modulePx < MIN_MODULE_PX) {
+    return { ok: false, reason: `Resolution too low: ${modulePx.toFixed(1)} px per QR module (minimum ${MIN_MODULE_PX}). Upload an SVG or a larger image.` }
+  }
+  const lowResolution = modulePx < WARN_MODULE_PX
   const traced = sampleGrid(img, code.location, n)
   const ec = readEcLevel(traced)
+  const bakedLogo = detectBakedLogo(traced, code.version)
   const verify = (m: Matrix01) => decodeImage(renderMatrix(m))?.data === payload
+  const base = { ok: true as const, payload, version: code.version, modulePx, lowResolution, bakedLogo }
 
-  if (verify(traced)) {
-    return { ok: true, scene: matrixScene(traced), payload, version: code.version, ecLevel: ec, method: 'traced', matrix: traced }
+  // With a logo baked in, the traced modules under it are lost: prefer a clean rebuild.
+  if (!bakedLogo && verify(traced)) {
+    return { ...base, scene: matrixScene(traced), ecLevel: ec, method: 'traced', matrix: traced }
   }
   const levels: EcLevel[] = ec ? [ec] : ['M', 'Q', 'H', 'L']
   for (const level of levels) {
     const m = rebuild(payload, code.version, level)
     if (m && verify(m)) {
-      return { ok: true, scene: matrixScene(m), payload, version: code.version, ecLevel: level, method: 'rebuilt', matrix: m }
+      return { ...base, scene: matrixScene(m), ecLevel: level, method: 'rebuilt', matrix: m }
     }
   }
-  return { ok: false, reason: 'The QR could be read but not redrawn reliably. Upload an SVG or a sharper image.' }
+  if (bakedLogo && verify(traced)) {
+    return { ...base, scene: matrixScene(traced), ecLevel: ec, method: 'traced', matrix: traced }
+  }
+  return { ok: false, reason: 'The QR could be read but not redrawn reliably (blurry, cropped or damaged). Upload an SVG or a sharper image.' }
 }

@@ -105,6 +105,21 @@ console.log('downloaded', dl.suggestedFilename())
 await page.waitForTimeout(300)
 console.log('status:', await page.locator('header').innerText())
 
+// Row range: Excel rows 2–4 → a 3-page PDF
+await page.getByLabel('First row').fill('2')
+await page.getByLabel('Last row').fill('4')
+await page.waitForFunction(() => document.body.innerText.includes('3 of 6 rows in range'), null, { timeout: 5000 })
+const [dlr] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.getByRole('button', { name: /^Download/ }).click()])
+console.log('downloaded (range 2–4)', dlr.suggestedFilename())
+if (!/_3p\.pdf$/.test(dlr.suggestedFilename())) throw new Error(`range export: expected 3 pages, got ${dlr.suggestedFilename()}`)
+await dlr.saveAs(join(out, `range-${dlr.suggestedFilename()}`))
+await page.getByRole('button', { name: 'All', exact: true }).click()
+
+// Print: builds the combined PDF and loads it into the hidden print frame
+await page.getByRole('button', { name: /^Print/ }).click()
+await page.waitForFunction(() => document.getElementById('print-frame')?.getAttribute('src')?.startsWith('blob:'), null, { timeout: 60000 })
+console.log('print frame loaded')
+
 // ZIP per MID
 await page.locator('select').filter({ hasText: 'One combined PDF' }).selectOption('zip')
 const [dl2] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.getByRole('button', { name: /^Download/ }).click()])
