@@ -32,7 +32,7 @@ where the two differ, the notes win). The guide image is in
 | Docker image / Dokploy deploy | **Written, never built** (no Docker in the dev sandbox) |
 | Real data, real printer, banking-app scan | **Not done**: needs the business side |
 
-Test suite: 74 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
+Test suite: 75 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
 
 ## 3. Run it
 

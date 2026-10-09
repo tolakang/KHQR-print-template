@@ -20,6 +20,7 @@ export const DEFAULT_ASSETS: Record<AssetKind, { file: string; name: string }> =
   corner: { file: 'assets/corner.svg', name: 'corner.svg (default)' },
 }
 export const RED_LOGO = { file: 'assets/bkc.svg', name: 'bkc.svg (red)' }
+export const WHITE_LOGO = { file: 'assets/bkw.svg', name: 'bkw.svg (white)' }
 
 export const SAMPLE_QR = '__sample__.svg'
 const SAMPLE_ROW: RowInput = {

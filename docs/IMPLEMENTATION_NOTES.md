@@ -115,11 +115,25 @@ non-QR images, all EC levels, and module-exact coverage.
   shows a notice and a per-sticker `qr-small` warning. Thresholds are a conservative guess:
   confirm with the print-and-scan test.
 
+## UI refresh and fixes (after the first deploy)
+
+- **White Bakong logo** (`public/assets/bkw.svg`): white disc with the dark mark, made from
+  `bkb.svg` by swapping its two colors. The logo card has a Black / Red / White color picker.
+- **No hairline around the artboard.** Where the background is narrower than the page (side
+  gaps at Original size, bleed), viewers showed a light seam between the edge bands and the
+  background's clipped edge (the artwork's white base layer anti-aliases over the band). Sampled
+  bands are now drawn on top of the background and overlap its edge by 0.3 pt; a single chosen
+  bleed color still goes underneath. Preview guides (trim / bleed / safe width) are now off by
+  default.
+- **Brand color #D22026** for every button, switch, selected tab and focus ring (`--color-brand`
+  in `src/index.css`); refreshed layout, switches instead of checkboxes, status pills, icons.
+- **Phones:** preview first, then the settings, then the rows table (CSS grid on desktop).
+
 ## Verification so far
 
 | Check | Result |
 | --- | --- |
-| Unit tests (`npm test`) | 74 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background, hiding logo / corner frame |
+| Unit tests (`npm test`) | 75 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background, hiding logo / corner frame |
 | `pdffonts` / `pdfimages` on samples | 0 fonts, 0 images |
 | `pdfinfo -box` A6 + 3 mm bleed | Media 314.65 × 436.54, Trim 297.64 × 419.53 at 8.50 |
 | QR round trip (`npm run qa:qr`) | 160-char KHQR-style payload decodes with the logo on, EC L/M/Q, at 150 and 72 dpi |
