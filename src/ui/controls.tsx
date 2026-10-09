@@ -41,7 +41,7 @@ export function Field({ label, hint, children, group }: { label: string; hint?: 
 }
 
 const inputCls =
-  'w-full rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-sm text-stone-900 shadow-xs transition placeholder:text-stone-400 hover:border-stone-300 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10 disabled:bg-stone-50 disabled:text-stone-400'
+  'w-full rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-sm text-stone-900 shadow-xs transition placeholder:text-stone-400 hover:border-stone-300 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/10 disabled:bg-stone-50 disabled:text-stone-400'
 
 /** Whole-number input that may be left empty (null). */
 export function OptionalIntInput({ value, onChange, min, placeholder, ariaLabel }: {
@@ -123,7 +123,7 @@ export function Toggle({ checked, onChange, label, hint, disabled }: { checked: 
       <input type="checkbox" className="peer sr-only" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
       <span
         aria-hidden
-        className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-stone-300 transition-colors peer-checked:bg-brand peer-focus-visible:ring-4 peer-focus-visible:ring-brand/20 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-4"
+        className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-stone-300 transition-colors peer-checked:bg-brand peer-focus-visible:ring-1 peer-focus-visible:ring-brand/20 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-4"
       />
       <span>
         <span className="block text-sm font-medium text-stone-800">{label}</span>
@@ -181,14 +181,14 @@ export function DropZone({ onFiles, children, accept }: { onFiles: (f: File[]) =
   return (
     <div
       {...props}
-      className={`rounded-xl border-2 border-dashed px-3 py-4 text-center text-xs transition-colors ${over ? 'border-brand bg-brand-50' : 'border-stone-200 bg-stone-50/70 hover:border-stone-300'}`}
+      className={`rounded-xl border border-dashed px-3 py-4 text-center text-xs transition-colors ${over ? 'border-brand bg-brand-50' : 'border-stone-200 bg-stone-50/70 hover:border-stone-300'}`}
     >
       {children}
     </div>
   )
 }
 
-const btnBase = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20 disabled:cursor-not-allowed'
+const btnBase = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand/20 disabled:cursor-not-allowed'
 export const btnCls = (variant: 'primary' | 'secondary' | 'ghost' = 'secondary', size: 'md' | 'sm' = 'md') =>
   ({
     primary: `${btnBase} ${size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2 text-sm'} bg-brand text-white shadow-sm shadow-brand/20 hover:bg-brand-600 active:bg-brand-700 disabled:bg-stone-300 disabled:shadow-none`,

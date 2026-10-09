@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 function Icon({ children, className = 'h-4 w-4' }: { children: ReactNode; className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
       {children}
     </svg>
   )

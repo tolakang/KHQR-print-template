@@ -21,6 +21,9 @@ import { cornerFrameScene, recolorScene } from '../core/layout/corner'
 import { inkBBox } from '../core/layout/place'
 import type { AssetKind, ExportResult, PreviewResult, QrFileStatus, RowInput, Settings } from './types'
 
+/** QR images cut from an imported PDF are named with this prefix. */
+export const PDF_QR_PREFIX = 'pdf-p'
+
 export type RasterDecoder = (bytes: Uint8Array, mime: string) => Promise<RGBAImage>
 /** Loads a bundled font file (path relative to the site root, e.g. 'fonts/Inter_800ExtraBold.ttf'). */
 export type FontFileLoader = (file: string) => Promise<Uint8Array>
@@ -152,7 +155,8 @@ export class Engine {
   async reprocessRaster(redrawRaster: boolean): Promise<QrFileStatus[]> {
     const out: QrFileStatus[] = []
     for (const [name, e] of this.qrs) {
-      if (e.status.kind === 'raster') out.push(await this.addQrFile(name, e.bytes, e.mime, redrawRaster))
+      // Codes read from a PDF are always redrawn (there is no SVG to fall back to).
+      if (e.status.kind === 'raster') out.push(await this.addQrFile(name, e.bytes, e.mime, redrawRaster || name.startsWith(PDF_QR_PREFIX)))
     }
     return out
   }
