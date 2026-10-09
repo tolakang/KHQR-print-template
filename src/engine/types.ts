@@ -11,6 +11,7 @@ export interface Settings {
   safeMarginPt: number
   midPosition: 'follow' | 'fixed'
   showCorner: boolean
+  showLogo: boolean
   redrawRaster: boolean
   /** Draw the background artwork (and its edge fill); off for pre-printed stock. */
   background: boolean

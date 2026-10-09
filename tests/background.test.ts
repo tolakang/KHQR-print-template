@@ -5,7 +5,7 @@ import { Engine } from '../src/engine/engine'
 import { defaultSettings } from '../src/store/settings'
 import type { RowInput } from '../src/engine/types'
 
-describe('export without background', () => {
+describe('showing and hiding assets', () => {
   let e: Engine
   const row: RowInput = { index: 0, excelRow: 2, name: 'The Pizza Company Sihanou', mid: '124092620291906', midImprecise: false, qrFile: 'qr.svg' }
   beforeAll(async () => {
@@ -35,6 +35,13 @@ describe('export without background', () => {
     const red = /fill="(#[cd][0-9a-f][0-3][0-9a-f][0-3][0-9a-f]|rgb\(2[0-9]{2},\s*[0-5]?[0-9],)/i
     expect(red.test(withBg.svg)).toBe(true)
     expect(red.test(noBg.svg)).toBe(false)
+  })
+  it('hides the logo and the corner frame on request', () => {
+    const s = defaultSettings()
+    const all = e.preview(row, s).svg.length
+    expect(e.preview(row, { ...s, showLogo: false }).svg.length).toBeLessThan(all)
+    expect(e.preview(row, { ...s, showCorner: false }).svg.length).toBeLessThan(all)
+    expect(defaultSettings()).toMatchObject({ showLogo: true, showCorner: true })
   })
   it('names the file and still exports every page', async () => {
     const s = { ...defaultSettings(), background: false }

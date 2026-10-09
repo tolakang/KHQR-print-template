@@ -154,7 +154,7 @@ export class Engine {
     if (row.midImprecise) warnings.push({ code: 'mid-precision', message: 'MID was stored as a number in Excel and may have lost digits. Format the MID column as Text.' })
     const qr = entry?.scene ?? null
     const st = composeSticker(
-      { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: this.assets.logo.scene, corner: this.assets.corner.scene },
+      { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: s.showLogo ? this.assets.logo.scene : null, corner: this.assets.corner.scene },
       this.stickerFonts,
       this.stickerOptions(s),
     )

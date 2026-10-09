@@ -10,6 +10,7 @@ export const defaultSettings = (): Settings => ({
   safeMarginPt: layout.safeMarginPt,
   midPosition: 'follow',
   showCorner: true,
+  showLogo: true,
   redrawRaster: true,
   background: true,
   pageSize: 'original',

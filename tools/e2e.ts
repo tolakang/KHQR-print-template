@@ -125,6 +125,14 @@ if (!/_no-bg_/.test(dlb.suggestedFilename())) throw new Error(`no-background exp
 await dlb.saveAs(join(out, dlb.suggestedFilename()))
 await page.getByText('Include background', { exact: true }).click()
 
+// Hide / show the logo and corner frame
+await page.getByRole('button', { name: 'Hide bakong logo' }).click()
+await page.getByRole('button', { name: 'Hide corner frame' }).click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: join(out, '4d-hidden-logo-corner.png') })
+await page.getByRole('button', { name: 'Show bakong logo' }).click()
+await page.getByRole('button', { name: 'Show corner frame' }).click()
+
 // Typography panel
 await page.getByRole('button', { name: /Typography/ }).click()
 await page.waitForTimeout(300)

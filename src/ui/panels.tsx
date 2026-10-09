@@ -10,19 +10,36 @@ import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmente
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 
+/** Setting that shows or hides each asset on the sticker (preview and export). */
+const VISIBLE_KEY = { background: 'background', logo: 'showLogo', corner: 'showCorner' } as const
+
 function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint: string }) {
   const a = useApp((s) => s.assets[kind])
+  const visible = useSettings((x) => x.s[VISIBLE_KEY[kind]])
+  const setSettings = useSettings((x) => x.set)
   const setAssetFile = useApp((s) => s.setAssetFile)
   const resetAsset = useApp((s) => s.resetAsset)
   const setAssetUrl = useApp((s) => s.setAssetUrl)
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-2.5">
       <div className="flex gap-3">
-        <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px]">
+        <div className={`flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px] ${visible ? '' : 'opacity-30'}`}>
           {a && <img src={svgThumb(a.svg)} alt="" className="max-h-full max-w-full" />}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-stone-900">{label}</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-medium text-stone-900">{label}</div>
+            <button
+              type="button"
+              className={`${btnCls('secondary')} !px-2 !py-0.5 text-xs`}
+              aria-pressed={!visible}
+              aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
+              onClick={() => setSettings({ [VISIBLE_KEY[kind]]: !visible })}
+            >
+              {visible ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          {!visible && <div className="text-[11px] font-medium text-amber-700">Hidden: not in preview or export</div>}
           <div className="truncate text-xs text-stone-500" title={a?.name}>{a?.name ?? 'Loading…'}</div>
           <div className="mt-1.5 flex flex-wrap gap-1">
             <FileButton accept=".svg,image/svg+xml" onFiles={(f) => setAssetFile(kind, f[0])}>Upload SVG</FileButton>
@@ -45,14 +62,11 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
 }
 
 export function AssetsPanel() {
-  const s = useSettings((x) => x.s)
-  const set = useSettings((x) => x.set)
   return (
     <Section title="Assets">
       <AssetSlot kind="background" label="Background" hint={`Fitted inside the trim with one uniform scale. Gaps and bleed are filled from the artwork's edge colors. Default: ${DEFAULT_ASSETS.background.name}.`} />
       <AssetSlot kind="logo" label="Bakong logo" hint="Always scaled to 32 × 32 pt and centered on the QR." />
       <AssetSlot kind="corner" label="Corner frame" hint="Scaled to 154.3 pt square around the QR." />
-      <Toggle checked={s.showCorner} onChange={(v) => set({ showCorner: v })} label="Show corner frame" />
     </Section>
   )
 }
