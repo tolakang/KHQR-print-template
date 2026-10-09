@@ -18,6 +18,8 @@
   --color-brand-200: #f6bcbe;
   --color-brand-600: #b91c21;
   --color-brand-700: #9c171b;
+  /* App background behind the cards and around the preview. */
+  --color-canvas: #f0f0f0;
 }
 
 html, body, #root { height: 100%; }

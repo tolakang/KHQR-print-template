@@ -146,8 +146,8 @@ await page.waitForTimeout(800)
 const cornerHtml = await page.locator('.preview-page').innerHTML()
 if (!cornerHtml.includes('#d22026')) throw new Error('corner color not applied')
 await page.screenshot({ path: join(out, '4g-corner.png') })
-await page.getByRole('button', { name: /^Guide \(20.6 pt\)/ }).click()
-await page.getByRole('button', { name: /^Guide \(#939598\)/ }).click()
+await page.getByRole('button', { name: 'Reset to default' }).click()
+if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.25') throw new Error('corner reset failed')
 console.log('corner controls ok')
 
 // Drag and drop an SVG onto the corner frame card
@@ -170,6 +170,11 @@ await page.waitForFunction(() => document.body.innerText.includes('Uploaded: Pop
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4c-typography.png') })
 console.log('fonts ok')
+await page.locator('section').filter({ hasText: 'Typography' }).getByRole('button', { name: 'Reset', exact: true }).click()
+await page.waitForTimeout(500)
+const khmerFont = await page.getByLabel('Merchant name font: Khmer').inputValue()
+if (khmerFont !== 'nokora-600') throw new Error(`typography reset failed: ${khmerFont}`)
+console.log('typography reset ok')
 
 // Zoom
 await page.getByRole('button', { name: 'Zoom in' }).click()

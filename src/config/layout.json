@@ -1,6 +1,6 @@
 {
   "artboard": { "w": 317.5, "h": 427.5 },
-  "corner": { "size": 154.3, "x": 81.6, "y": 101.45, "stroke": 2.7, "arm": 37.02, "radius": 20.6, "color": "#939598" },
+  "corner": { "size": 154.3, "x": 81.6, "y": 101.45, "stroke": 2.7, "arm": 37.02, "radius": 13.25, "color": "#939598" },
   "qr": { "size": 134, "x": 91.75, "y": 111.6 },
   "logo": { "size": 32, "x": 142.75, "y": 162.6 },
   "name": { "baselineY": 299.9, "lineGap": 11.8, "sizePt": 23 },

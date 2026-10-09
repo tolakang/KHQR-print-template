@@ -18,7 +18,8 @@ export function useRows() {
 
 const ACTUAL = 96 / 72
 const ZOOM_STEP = 1.25
-const MIN_ZOOM = 0.1
+/** Never smaller than 50 % of actual size (fit included); scroll instead. */
+const MIN_ZOOM = 0.5 * ACTUAL
 const MAX_ZOOM = 8
 const zoomBtn = 'grid h-8 w-8 place-items-center text-stone-600 transition hover:bg-brand-50 hover:text-brand first:rounded-l-lg'
 
@@ -65,7 +66,7 @@ export function Preview() {
     return () => ro.disconnect()
   }, [])
   const pad = view.w < 640 ? 32 : 64
-  const fit = res && view.w > 0 ? Math.max(0.05, Math.min((view.w - pad) / res.width, (view.h - pad - 40) / res.height)) : ACTUAL
+  const fit = res && view.w > 0 ? Math.max(MIN_ZOOM, Math.min((view.w - pad) / res.width, (view.h - pad - 40) / res.height)) : ACTUAL
   const scale = zoom === 'fit' ? fit : zoom
   const zoomBy = (k: number) => setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale * k)))
   // Ctrl / Cmd + wheel (and trackpad pinch) zooms the preview instead of the page.
@@ -89,7 +90,7 @@ export function Preview() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 bg-white px-4 py-2">
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-4 sm:px-6 md:pl-3">
         <div className="flex items-center rounded-lg border border-stone-200 bg-white shadow-xs">
           <button type="button" className="grid h-8 w-8 place-items-center rounded-l-lg text-brand transition hover:bg-brand-50 disabled:text-stone-300 disabled:hover:bg-transparent" disabled={idx <= 0} onClick={() => select(idx - 1)} aria-label="Previous row">
             <ChevronLeft />
@@ -104,7 +105,7 @@ export function Preview() {
         <div className="ml-auto flex items-center gap-3 text-xs text-stone-500">
           {pending && res && <span className="animate-pulse text-stone-400">Updating…</span>}
           {res && (
-            <span className="hidden rounded-full bg-stone-100 px-2.5 py-1 font-medium tabular-nums text-stone-600 sm:inline">
+            <span className="hidden rounded-full border border-stone-200 bg-white px-2.5 py-1 font-medium tabular-nums text-stone-600 sm:inline">
               {res.width.toFixed(2)} × {res.height.toFixed(2)} pt · {(res.width * PT_TO_MM).toFixed(1)} × {(res.height * PT_TO_MM).toFixed(1)} mm
             </span>
           )}
@@ -116,7 +117,7 @@ export function Preview() {
         </div>
       </div>
       <div className="relative min-h-0 flex-1">
-      <div ref={viewRef} className="absolute inset-0 overflow-auto bg-stone-100 bg-[radial-gradient(circle,#d6d3d1_1px,transparent_1px)] bg-[length:16px_16px]">
+      <div ref={viewRef} className="absolute inset-0 overflow-auto bg-canvas">
         <div className="flex px-4 pb-14 pt-4 sm:px-8 sm:pt-8" style={{ minWidth: '100%', minHeight: '100%', width: 'max-content' }}>
           {!ready && <div className="m-auto text-sm text-stone-500">Loading fonts and engine…</div>}
           {err && <div className="m-auto text-sm text-brand">{err}</div>}
@@ -143,7 +144,7 @@ export function Preview() {
         )}
       </div>
       {res && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-stone-200 bg-white px-4 py-2 text-xs">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 pb-3 text-xs sm:px-6 md:pl-3">
           {res.warnings.length > 0 ? (
             <ul className="flex flex-wrap gap-1.5">
               {res.warnings.map((w, i) => (

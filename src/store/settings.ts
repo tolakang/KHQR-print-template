@@ -52,6 +52,8 @@ export const useSettings = create<SettingsState>()(
         const d = defaultSettings()
         const lim = { ...d.limits, ...(p.limits ?? {}) }
         lim.nameChars = Math.min(NAME_CHARS_MAX, lim.nameChars)
+        // 20.6 was the guide radius when corners were drawn as smooth curves; the circular guide is 13.25.
+        if (p.cornerRadiusPt === 20.6) p.cornerRadiusPt = d.cornerRadiusPt
         return { ...current, s: { ...d, ...p, limits: lim } }
       },
     },

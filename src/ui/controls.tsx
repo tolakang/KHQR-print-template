@@ -2,24 +2,28 @@ import { useRef, useState, type ReactNode } from 'react'
 import { useFileDrop } from './useFileDrop'
 import { ChevronDown } from './icons'
 
-export function Section({ title, icon, children, defaultOpen = true, badge }: { title: string; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; badge?: ReactNode }) {
+/** A settings card. `action` sits in the header (e.g. a Reset button) and stays visible when collapsed. */
+export function Section({ title, icon, children, defaultOpen = true, badge, action }: { title: string; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; badge?: ReactNode; action?: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section className="border-b border-stone-200/80 last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="group flex w-full items-center justify-between gap-2 px-5 py-3.5 text-left transition-colors hover:bg-stone-50"
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-2.5 text-sm font-semibold text-stone-900">
-          {icon && <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand">{icon}</span>}
-          {title}
-          {badge}
-        </span>
-        <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform duration-200 group-hover:text-stone-600 ${open ? '' : '-rotate-90'}`} />
-      </button>
-      {open && <div className="space-y-4 px-5 pb-5">{children}</div>}
+    <section className="shrink-0 overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.10)]">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={`group flex w-full items-center gap-2 py-4 pl-5 text-left transition-colors hover:bg-stone-50/70 ${action ? 'pr-32' : 'pr-5'}`}
+          aria-expanded={open}
+        >
+          <span className="flex flex-1 items-center gap-3 text-[15px] font-semibold tracking-tight text-stone-900">
+            {icon && <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-50 text-brand">{icon}</span>}
+            {title}
+            {badge}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform duration-200 group-hover:text-stone-600 ${open ? '' : '-rotate-90'} ${action ? 'absolute right-5' : ''}`} />
+        </button>
+        {action && <div className="absolute right-11 top-1/2 -translate-y-1/2">{action}</div>}
+      </div>
+      {open && <div className="space-y-4 border-t border-stone-100 px-5 pb-5 pt-4">{children}</div>}
     </section>
   )
 }
