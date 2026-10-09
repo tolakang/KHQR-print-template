@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { layout, limits, NAME_CHARS_MAX } from '../config'
+import { DEFAULT_NAME_FONT } from '../config/fonts'
 import type { Settings } from '../engine/types'
 
 export const defaultSettings = (): Settings => ({
@@ -11,6 +12,8 @@ export const defaultSettings = (): Settings => ({
   midPosition: 'follow',
   showCorner: true,
   showLogo: true,
+  nameFontLatin: DEFAULT_NAME_FONT.latin,
+  nameFontKhmer: DEFAULT_NAME_FONT.khmer,
   redrawRaster: true,
   background: true,
   pageSize: 'original',

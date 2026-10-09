@@ -6,6 +6,7 @@ import type { AssetKind, QrFileStatus, RowInput } from '../engine/types'
 import type { Warning } from '../core/scene'
 import { readWorkbook, guessColumns, matchQrFiles, type SheetData, type ColumnMap, type RowRange } from '../core/excel/read'
 import { useSettings } from './settings'
+import { CUSTOM_FONT, DEFAULT_NAME_FONT, type FontScript } from '../config/fonts'
 
 export interface AssetState {
   name: string
@@ -20,7 +21,7 @@ export const DEFAULT_ASSETS: Record<AssetKind, { file: string; name: string }> =
   corner: { file: 'assets/corner.svg', name: 'corner.svg (default)' },
 }
 export const RED_LOGO = { file: 'assets/bkc.svg', name: 'bkc.svg (red)' }
-export const WHITE_LOGO = { file: 'assets/bkw.svg', name: 'bkw.svg (white)' }
+export const WHITE_LOGO = { file: 'assets/bkw.svg', name: 'bkw.svg (blank, white)' }
 
 export const SAMPLE_QR = '__sample__.svg'
 const SAMPLE_ROW: RowInput = {
@@ -40,6 +41,8 @@ interface AppState {
   qrFiles: QrFileStatus[]
   qrBusy: [number, number] | null
   selected: number
+  /** User fonts for the merchant name (file name per script). */
+  customFonts: Partial<Record<FontScript, string>>
   init: () => Promise<void>
   setAssetFile: (kind: AssetKind, file: File) => Promise<void>
   setAssetUrl: (kind: AssetKind, url: string, name: string) => Promise<void>
@@ -52,6 +55,8 @@ interface AppState {
   clearQrFiles: () => Promise<void>
   reprocessRaster: (redraw: boolean) => Promise<void>
   select: (i: number) => void
+  setCustomFont: (script: FontScript, file: File) => Promise<void>
+  removeCustomFont: (script: FontScript) => Promise<void>
 }
 
 async function fetchText(url: string) {
@@ -72,6 +77,7 @@ export const useApp = create<AppState>()((set, get) => ({
   qrFiles: [],
   qrBusy: null,
   selected: -1,
+  customFonts: {},
 
   init: async () => {
     try {
@@ -85,6 +91,17 @@ export const useApp = create<AppState>()((set, get) => ({
       }
       const sample = await QRCode.toString('KHQR SAMPLE - replace with your QR files', { type: 'svg', margin: 4, errorCorrectionLevel: 'M' })
       await engine().addQrFiles([{ name: SAMPLE_QR, bytes: new TextEncoder().encode(sample), mime: 'image/svg+xml' }], true)
+      for (const script of ['latin', 'khmer'] as FontScript[]) {
+        const saved = await idbGet<{ name: string; bytes: Uint8Array }>(`font:${script}`).catch(() => undefined)
+        if (saved && (await engine().registerFont(CUSTOM_FONT[script], script, saved.bytes)).ok) {
+          set((st) => ({ customFonts: { ...st.customFonts, [script]: saved.name } }))
+        }
+      }
+      // A custom font chosen earlier but no longer stored falls back to the guide font.
+      const s = useSettings.getState()
+      const missing = (script: FontScript, id: string) => id === CUSTOM_FONT[script] && !get().customFonts[script]
+      if (missing('latin', s.s.nameFontLatin)) s.set({ nameFontLatin: DEFAULT_NAME_FONT.latin })
+      if (missing('khmer', s.s.nameFontKhmer)) s.set({ nameFontKhmer: DEFAULT_NAME_FONT.khmer })
       set({ ready: true })
     } catch (e) {
       set({ error: (e as Error).message })
@@ -177,6 +194,34 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   select: (i) => set({ selected: i }),
+
+  setCustomFont: async (script, file) => {
+    if (!/\.(ttf|otf)$/i.test(file.name)) {
+      set({ error: `${file.name}: use a .ttf or .otf font file.` })
+      return
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const r = await engine().registerFont(CUSTOM_FONT[script], script, bytes)
+    if (!r.ok) {
+      set({ error: `${file.name}: ${r.error}` })
+      return
+    }
+    await idbSet(`font:${script}`, { name: file.name, bytes }).catch(() => undefined)
+    set((st) => ({ error: null, customFonts: { ...st.customFonts, [script]: file.name } }))
+    useSettings.getState().set(script === 'latin' ? { nameFontLatin: CUSTOM_FONT.latin } : { nameFontKhmer: CUSTOM_FONT.khmer })
+  },
+
+  removeCustomFont: async (script) => {
+    await idbDel(`font:${script}`).catch(() => undefined)
+    set((st) => {
+      const next = { ...st.customFonts }
+      delete next[script]
+      return { customFonts: next }
+    })
+    const s = useSettings.getState()
+    if (script === 'latin' && s.s.nameFontLatin === CUSTOM_FONT.latin) s.set({ nameFontLatin: DEFAULT_NAME_FONT.latin })
+    if (script === 'khmer' && s.s.nameFontKhmer === CUSTOM_FONT.khmer) s.set({ nameFontKhmer: DEFAULT_NAME_FONT.khmer })
+  },
 }))
 
 /** Rows derived from the current sheet, column map and matched QR files. */

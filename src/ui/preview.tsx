@@ -4,7 +4,7 @@ import { useSettings } from '../store/settings'
 import { charCount, normalizeName } from '../core/text/wrap'
 import { engine } from '../engine/client'
 import type { PreviewResult, RowInput } from '../engine/types'
-import { ChevronLeft, ChevronRight, Alert, Check } from './icons'
+import { ChevronLeft, ChevronRight, Alert, Check, Minus, Plus, Maximize } from './icons'
 
 const PT_TO_MM = 25.4 / 72
 
@@ -16,9 +16,16 @@ export function useRows() {
   return useMemo(() => deriveRows({ sheets, sheetIndex, cols, qrFiles }), [sheets, sheetIndex, cols, qrFiles])
 }
 
+const ACTUAL = 96 / 72
+const ZOOM_STEP = 1.25
+const MIN_ZOOM = 0.1
+const MAX_ZOOM = 8
+const zoomBtn = 'grid h-8 w-8 place-items-center text-stone-600 transition hover:bg-brand-50 hover:text-brand first:rounded-l-lg'
+
 export function Preview() {
   const ready = useApp((s) => s.ready)
   const assets = useApp((s) => s.assets)
+  const customFonts = useApp((s) => s.customFonts)
   const selected = useApp((s) => s.selected)
   const select = useApp((s) => s.select)
   const settings = useSettings((s) => s.s)
@@ -44,7 +51,39 @@ export function Preview() {
         .finally(() => { if (n === seq.current) setPending(false) })
     }, 60)
     return () => clearTimeout(t)
-  }, [ready, row, settings, assets])
+  }, [ready, row, settings, assets, customFonts])
+
+  // Zoom: 'fit' follows the window size; a number is CSS px per pt (ACTUAL = 100 %).
+  const [zoom, setZoom] = useState<'fit' | number>('fit')
+  const viewRef = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = viewRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setView({ w: e.contentRect.width, h: e.contentRect.height }))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const pad = view.w < 640 ? 32 : 64
+  const fit = res && view.w > 0 ? Math.max(0.05, Math.min((view.w - pad) / res.width, (view.h - pad - 40) / res.height)) : ACTUAL
+  const scale = zoom === 'fit' ? fit : zoom
+  const zoomBy = (k: number) => setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale * k)))
+  // Ctrl / Cmd + wheel (and trackpad pinch) zooms the preview instead of the page.
+  const zoomRef = useRef(zoomBy)
+  useEffect(() => {
+    zoomRef.current = zoomBy
+  })
+  useEffect(() => {
+    const el = viewRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      zoomRef.current(e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP)
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
 
   const svg = useMemo(() => (res && !guides ? res.svg.replace(/<g class="guides">[\s\S]*?<\/g><\/svg>$/, '</svg>') : res?.svg), [res, guides])
 
@@ -76,15 +115,31 @@ export function Preview() {
           </label>
         </div>
       </div>
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-auto bg-stone-100 bg-[radial-gradient(circle,#d6d3d1_1px,transparent_1px)] bg-[length:16px_16px] p-4 sm:p-8">
-        {!ready && <div className="text-sm text-stone-500">Loading fonts and engine…</div>}
-        {err && <div className="text-sm text-brand">{err}</div>}
-        {svg && (
-          <div
-            className="preview-page h-full max-h-[78vh] w-auto rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,.06),0_12px_32px_-4px_rgba(0,0,0,.18)] [&>svg]:block [&>svg]:h-full [&>svg]:w-auto"
-            style={{ aspectRatio: `${res!.width} / ${res!.height}` }}
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
+      <div className="relative min-h-0 flex-1">
+      <div ref={viewRef} className="absolute inset-0 overflow-auto bg-stone-100 bg-[radial-gradient(circle,#d6d3d1_1px,transparent_1px)] bg-[length:16px_16px]">
+        <div className="flex px-4 pb-14 pt-4 sm:px-8 sm:pt-8" style={{ minWidth: '100%', minHeight: '100%', width: 'max-content' }}>
+          {!ready && <div className="m-auto text-sm text-stone-500">Loading fonts and engine…</div>}
+          {err && <div className="m-auto text-sm text-brand">{err}</div>}
+          {svg && res && (
+            <div
+              className="preview-page m-auto shrink-0 rounded-[2px] bg-white shadow-[0_1px_3px_rgba(0,0,0,.06),0_12px_32px_-4px_rgba(0,0,0,.18)] [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+              style={{ width: res.width * scale, height: res.height * scale }}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          )}
+        </div>
+      </div>
+        {res && (
+          <div className="absolute bottom-3 right-3 flex items-center rounded-lg border border-stone-200 bg-white/95 shadow-md backdrop-blur" role="group" aria-label="Zoom">
+            <button type="button" className={zoomBtn} onClick={() => zoomBy(1 / ZOOM_STEP)} aria-label="Zoom out" title="Zoom out (Ctrl + scroll)"><Minus /></button>
+            <button type="button" className="min-w-14 border-x border-stone-200 px-2 py-1.5 text-xs font-semibold tabular-nums text-stone-700 hover:text-brand" onClick={() => setZoom(ACTUAL)} title="Actual size (100%)">
+              {Math.round((scale / ACTUAL) * 100)}%
+            </button>
+            <button type="button" className={zoomBtn} onClick={() => zoomBy(ZOOM_STEP)} aria-label="Zoom in" title="Zoom in (Ctrl + scroll)"><Plus /></button>
+            <button type="button" className={`flex h-8 items-center gap-1 rounded-r-lg border-l border-stone-200 px-2.5 text-xs font-semibold transition ${zoom === 'fit' ? 'bg-brand text-white' : 'text-stone-600 hover:bg-brand-50 hover:text-brand'}`} onClick={() => setZoom('fit')} aria-pressed={zoom === 'fit'} title="Fit to the window">
+              <Maximize className="h-3.5 w-3.5" />Fit
+            </button>
+          </div>
         )}
       </div>
       {res && (

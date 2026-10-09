@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react'
+import { useFileDrop } from './useFileDrop'
 import { ChevronDown } from './icons'
 
 export function Section({ title, icon, children, defaultOpen = true, badge }: { title: string; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; badge?: ReactNode }) {
@@ -172,17 +173,10 @@ export function FileButton({ accept, multiple, onFiles, children, variant = 'sec
 }
 
 export function DropZone({ onFiles, children, accept }: { onFiles: (f: File[]) => void; children: ReactNode; accept?: RegExp }) {
-  const [over, setOver] = useState(false)
+  const { over, props } = useFileDrop(onFiles, accept)
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); setOver(true) }}
-      onDragLeave={() => setOver(false)}
-      onDrop={(e) => {
-        e.preventDefault()
-        setOver(false)
-        const files = Array.from(e.dataTransfer.files).filter((f) => !accept || accept.test(f.name))
-        if (files.length) onFiles(files)
-      }}
+      {...props}
       className={`rounded-xl border-2 border-dashed px-3 py-4 text-center text-xs transition-colors ${over ? 'border-brand bg-brand-50' : 'border-stone-200 bg-stone-50/70 hover:border-stone-300'}`}
     >
       {children}

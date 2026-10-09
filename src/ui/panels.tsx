@@ -6,7 +6,9 @@ import { pageGeometry, type PageSizeName } from '../core/layout/page'
 import { qrPrintSize } from '../core/qr/printSize'
 import { rowsInRange } from '../core/excel/read'
 import { layout, NAME_CHARS_MAX } from '../config'
+import { NAME_FONTS, CUSTOM_FONT, type FontScript } from '../config/fonts'
 import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
+import { useFileDrop } from './useFileDrop'
 import { Eye, EyeOff, Upload, Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset } from './icons'
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
@@ -17,7 +19,7 @@ const VISIBLE_KEY = { background: 'background', logo: 'showLogo', corner: 'showC
 const LOGO_COLORS = [
   { key: 'black', label: 'Black', swatch: 'bg-[#231f20]', file: DEFAULT_ASSETS.logo.file, name: DEFAULT_ASSETS.logo.name },
   { key: 'red', label: 'Red', swatch: 'bg-[#d0021b]', file: RED_LOGO.file, name: RED_LOGO.name },
-  { key: 'white', label: 'White', swatch: 'bg-white ring-1 ring-inset ring-stone-300', file: WHITE_LOGO.file, name: WHITE_LOGO.name },
+  { key: 'white', label: 'Blank', swatch: 'bg-white ring-1 ring-inset ring-stone-300', file: WHITE_LOGO.file, name: WHITE_LOGO.name },
 ] as const
 
 function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint: string }) {
@@ -27,8 +29,17 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
   const setAssetFile = useApp((s) => s.setAssetFile)
   const resetAsset = useApp((s) => s.resetAsset)
   const setAssetUrl = useApp((s) => s.setAssetUrl)
+  const drop = useFileDrop((f) => setAssetFile(kind, f[0]))
   return (
-    <div className={`rounded-xl border bg-white p-3 transition-colors ${visible ? 'border-stone-200' : 'border-dashed border-stone-300 bg-stone-50/60'}`}>
+    <div
+      {...drop.props}
+      className={`relative rounded-xl border bg-white p-3 transition-colors ${drop.over ? 'border-2 border-dashed border-brand bg-brand-50' : visible ? 'border-stone-200' : 'border-dashed border-stone-300 bg-stone-50/60'}`}
+    >
+      {drop.over && (
+        <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-xl bg-brand-50/90 text-sm font-semibold text-brand">
+          <span className="flex items-center gap-2"><Upload className="h-4 w-4" />Drop SVG to replace the {label.toLowerCase()}</span>
+        </div>
+      )}
       <div className="flex gap-3">
         <div className={`grid h-16 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px] p-1 transition-opacity ${visible ? '' : 'opacity-30 grayscale'}`}>
           {a && <img src={svgThumb(a.svg)} alt="" className="max-h-full max-w-full" />}
@@ -55,6 +66,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
             <FileButton accept=".svg,image/svg+xml" onFiles={(f) => setAssetFile(kind, f[0])}>
               <Upload className="h-3.5 w-3.5" />Upload SVG
             </FileButton>
+            <span className="hidden text-[11px] text-stone-400 sm:inline">or drop it here</span>
             {a && !a.isDefault && kind !== 'logo' && (
               <button type="button" className={btnCls('ghost')} onClick={() => resetAsset(kind)}>Reset</button>
             )}
@@ -197,13 +209,44 @@ function rangeHint(total: number, inRange: number, r: { from: number | null; to:
   return `${inRange} of ${total} rows in range.`
 }
 
+function FontPicker({ script }: { script: FontScript }) {
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  const custom = useApp((x) => x.customFonts[script])
+  const setCustomFont = useApp((x) => x.setCustomFont)
+  const removeCustomFont = useApp((x) => x.removeCustomFont)
+  const drop = useFileDrop((f) => setCustomFont(script, f[0]), /\.(ttf|otf)$/i)
+  const value = script === 'latin' ? s.nameFontLatin : s.nameFontKhmer
+  const options = [
+    ...NAME_FONTS[script].map((f) => ({ value: f.id, label: f.label })),
+    ...(custom ? [{ value: CUSTOM_FONT[script], label: `Uploaded: ${custom}` }] : []),
+  ]
+  const label = script === 'latin' ? 'English' : 'Khmer'
+  return (
+    <div {...drop.props} className={`rounded-xl border p-3 transition-colors ${drop.over ? 'border-2 border-dashed border-brand bg-brand-50' : 'border-stone-200'}`}>
+      <Field label={`Merchant name font: ${label}`}>
+        <Select value={value} onChange={(v) => set(script === 'latin' ? { nameFontLatin: v } : { nameFontKhmer: v })} options={options} />
+      </Field>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <FileButton accept=".ttf,.otf,font/ttf,font/otf" onFiles={(f) => setCustomFont(script, f[0])}>
+          <Upload className="h-3.5 w-3.5" />{custom ? 'Replace font' : 'Upload font'}
+        </FileButton>
+        {custom && <button type="button" className={btnCls('ghost')} onClick={() => removeCustomFont(script)}>Remove</button>}
+        <span className="text-[11px] text-stone-400">{drop.over ? 'Drop the font file' : '.ttf / .otf, or drop it here'}</span>
+      </div>
+    </div>
+  )
+}
+
 export function TypographyPanel() {
   const s = useSettings((x) => x.s)
   const set = useSettings((x) => x.set)
   const d = defaultSettings()
   return (
     <Section title="Typography" icon={<TypeIcon className="h-4 w-4" />} defaultOpen={false}>
-      <p className="text-[11px] leading-snug text-stone-500">Name: Nunito Sans ExtraBold (English) + Nokora SemiBold (Khmer). MID: Nunito Sans Regular. All text is outlined.</p>
+      <FontPicker script="latin" />
+      <FontPicker script="khmer" />
+      <p className="text-[11px] leading-snug text-stone-500">English letters, digits and symbols use the English font; Khmer letters use the Khmer font. MID: Nunito Sans Regular. All text is outlined in the PDF.</p>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Name size"><NumberInput value={s.nameSizePt} onChange={(v) => set({ nameSizePt: v })} min={6} max={60} step={0.5} suffix="pt" /></Field>
         <Field label="MID size"><NumberInput value={s.midSizePt} onChange={(v) => set({ midSizePt: v })} min={4} max={30} step={0.5} suffix="pt" /></Field>
@@ -216,7 +259,7 @@ export function TypographyPanel() {
         <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
       </Field>
       <p className="text-[11px] leading-snug text-stone-500">The whole name is limited to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included); extra words are dropped and flagged. It wraps by whole word at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
-      <button type="button" className={`${btnCls('secondary')} w-full`} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition })}><Reset className="h-4 w-4" />Reset to guide values</button>
+      <button type="button" className={`${btnCls('secondary')} w-full`} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition, nameFontLatin: d.nameFontLatin, nameFontKhmer: d.nameFontKhmer })}><Reset className="h-4 w-4" />Reset to guide values</button>
     </Section>
   )
 }

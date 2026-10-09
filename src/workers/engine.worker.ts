@@ -40,7 +40,7 @@ function getEngine(): Promise<Engine> {
         get('fonts/NunitoSans-Regular.ttf'),
         get('fonts/Nokora-SemiBold.ttf'),
       ])
-      return new Engine({ extraBold, regular, khmer }, decodeRaster)
+      return new Engine({ extraBold, regular, khmer }, decodeRaster, get)
     })()
   }
   return engine
@@ -81,7 +81,11 @@ self.onmessage = async (ev: MessageEvent) => {
         result = await e.reprocessRaster(args[0] as boolean)
         break
       case 'preview':
+        await e.ensureFonts(args[1] as never)
         result = e.preview(args[0] as never, args[1] as never)
+        break
+      case 'registerFont':
+        result = e.registerFont(args[0] as string, args[1] as never, args[2] as Uint8Array)
         break
       case 'export': {
         const r = await e.export(

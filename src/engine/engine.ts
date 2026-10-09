@@ -7,6 +7,8 @@ import { zipSync } from 'fflate'
 import { layout, mmToPt, NAME_CHARS_MAX } from '../config'
 import { parseSvg, svgToScene } from '../core/svg/toScene'
 import { loadBundle, bundleOutliner, type FontBundle } from '../core/text/fonts'
+import { loadFont, type LoadedFont } from '../core/text/outline'
+import { DEFAULT_NAME_FONT, SCRIPT_PROBE, fontChoice, type FontScript } from '../config/fonts'
 import { composeSticker, type StickerOptions, type StickerFonts } from '../core/layout/sticker'
 import { buildPage, prepareBackground, pageGeometry, type ExportOptions, type PreparedBackground } from '../core/layout/page'
 import { PdfBuilder } from '../core/pdf/writer'
@@ -19,6 +21,8 @@ import { inkBBox } from '../core/layout/place'
 import type { AssetKind, ExportResult, PreviewResult, QrFileStatus, RowInput, Settings } from './types'
 
 export type RasterDecoder = (bytes: Uint8Array, mime: string) => Promise<RGBAImage>
+/** Loads a bundled font file (path relative to the site root, e.g. 'fonts/Inter_800ExtraBold.ttf'). */
+export type FontFileLoader = (file: string) => Promise<Uint8Array>
 
 export interface FontBytes { extraBold: ArrayBuffer | Uint8Array; regular: ArrayBuffer | Uint8Array; khmer: ArrayBuffer | Uint8Array }
 
@@ -34,14 +38,50 @@ export class Engine {
   private bg: PreparedBackground | null = null
   private qrs = new Map<string, QrEntry>()
   private decodeRaster: RasterDecoder
+  private loadFontFile: FontFileLoader | null
+  /** Merchant-name fonts by id (bundled ones load on first use; custom ones are registered). */
+  private nameFonts = new Map<string, LoadedFont>()
 
-  constructor(fonts: FontBytes, decodeRaster: RasterDecoder) {
+  constructor(fonts: FontBytes, decodeRaster: RasterDecoder, loadFontFile: FontFileLoader | null = null) {
     this.fonts = loadBundle(fonts)
     this.decodeRaster = decodeRaster
+    this.loadFontFile = loadFontFile
+    this.nameFonts.set(DEFAULT_NAME_FONT.latin, this.fonts.extraBold)
+    this.nameFonts.set(DEFAULT_NAME_FONT.khmer, this.fonts.khmer)
   }
 
-  private get stickerFonts(): StickerFonts {
-    return { nameLatin: this.fonts.extraBold, nameKhmer: this.fonts.khmer, midLatin: this.fonts.regular }
+  /** Add a user font for the merchant name. Rejects files without the script's letters. */
+  registerFont(id: string, script: FontScript, bytes: Uint8Array): { ok: boolean; error?: string } {
+    let f: LoadedFont
+    try {
+      f = loadFont(bytes)
+    } catch {
+      return { ok: false, error: 'Not a readable font file. Use .ttf or .otf.' }
+    }
+    if (f.font.glyph(SCRIPT_PROBE[script]) === undefined) {
+      return { ok: false, error: script === 'khmer' ? 'This font has no Khmer letters.' : 'This font has no Latin letters.' }
+    }
+    this.nameFonts.set(id, f)
+    return { ok: true }
+  }
+
+  /** Load the bundled name fonts the settings ask for (no-op once loaded). */
+  async ensureFonts(s: Settings): Promise<void> {
+    for (const script of ['latin', 'khmer'] as const) {
+      const id = script === 'latin' ? s.nameFontLatin : s.nameFontKhmer
+      const c = fontChoice(script, id)
+      if (this.nameFonts.has(id) || !c || !this.loadFontFile) continue
+      this.nameFonts.set(id, loadFont(await this.loadFontFile(c.file)))
+    }
+  }
+
+  private stickerFonts(s: Settings, warnings: Warning[]): StickerFonts {
+    const pick = (script: FontScript, id: string) => {
+      const f = this.nameFonts.get(id)
+      if (!f) warnings.push({ code: 'font-missing', message: `The chosen ${script === 'latin' ? 'English' : 'Khmer'} name font is not loaded; using the guide font.` })
+      return f ?? this.nameFonts.get(DEFAULT_NAME_FONT[script])!
+    }
+    return { nameLatin: pick('latin', s.nameFontLatin), nameKhmer: pick('khmer', s.nameFontKhmer), midLatin: this.fonts.regular }
   }
 
   /** Set an asset from SVG text (null clears it). Returns warnings. */
@@ -155,7 +195,7 @@ export class Engine {
     const qr = entry?.scene ?? null
     const st = composeSticker(
       { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: s.showLogo ? this.assets.logo.scene : null, corner: this.assets.corner.scene },
-      this.stickerFonts,
+      this.stickerFonts(s, warnings),
       this.stickerOptions(s),
     )
     const all = [...warnings, ...st.warnings.filter((w) => !(w.code === 'qr-empty' && !qr))]
@@ -187,6 +227,7 @@ export class Engine {
 
   async export(rows: RowInput[], s: Settings, onProgress: (done: number, total: number) => void, isCancelled: () => boolean): Promise<ExportResult> {
     const t0 = Date.now()
+    await this.ensureFonts(s)
     const opts = this.exportOptions(s)
     const skipped: ExportResult['skipped'] = []
     const warningsByRow: ExportResult['warningsByRow'] = []

@@ -32,7 +32,7 @@ where the two differ, the notes win). The guide image is in
 | Docker image / Dokploy deploy | **Written, never built** (no Docker in the dev sandbox) |
 | Real data, real printer, banking-app scan | **Not done**: needs the business side |
 
-Test suite: 75 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
+Test suite: 79 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
 
 ## 3. Run it
 
@@ -128,8 +128,10 @@ what you see is what prints.
    stop, masks/filters/embedded images are skipped, each with a warning.
 7. Uploaded **background/logo/corner must be SVG** (raster rejected), stricter than the plan,
    which allowed raster with a warning. Easy to relax in `store/app.ts → setAssetFile`.
-8. Fonts are TTFs from `@expo-google-fonts` (OFL, licences in `public/fonts/`). Nokora is
-   also loaded as a UI font for Khmer text in tables.
+8. Fonts are TTFs from `@expo-google-fonts` (OFL, licences in `public/fonts/` and
+   `public/fonts/licenses/`). The merchant name defaults to the guide fonts; other bundled
+   fonts and uploaded .ttf/.otf files can be chosen in Typography (`src/config/fonts.ts`).
+   Nokora is also loaded as a UI font for Khmer text in tables.
 
 ## 7. Known gaps and risks (honest list)
 

@@ -43,12 +43,16 @@ describe('showing and hiding assets', () => {
     expect(e.preview(row, { ...s, showCorner: false }).svg.length).toBeLessThan(all)
     expect(defaultSettings()).toMatchObject({ showLogo: true, showCorner: true })
   })
-  it('draws the white logo: white disc, dark mark', () => {
+  it('draws the blank logo all white over the QR centre', () => {
+    const black = e.preview(row, defaultSettings()).svg
     e.setAsset('logo', readFileSync('public/assets/bkw.svg', 'utf8'))
-    const svg = e.preview(row, defaultSettings()).svg
-    e.setAsset('logo', readFileSync('public/assets/bkb.svg', 'utf8'))
     expect(e.assetWarnings('logo')).toEqual([])
-    expect(svg).toContain('fill="#231f20"')
+    const blank = e.preview(row, defaultSettings()).svg
+    const none = e.preview(row, { ...defaultSettings(), showLogo: false }).svg
+    e.setAsset('logo', readFileSync('public/assets/bkb.svg', 'utf8'))
+    expect(black).toContain('fill="#231f20"')
+    expect(blank).not.toContain('fill="#231f20"')
+    expect(blank).not.toBe(none)
   })
   it('names the file and still exports every page', async () => {
     const s = { ...defaultSettings(), background: false }

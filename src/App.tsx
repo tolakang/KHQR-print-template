@@ -46,7 +46,7 @@ export default function App() {
           <TypographyPanel />
           <ExportPanel />
           <p className="px-5 py-4 text-[11px] leading-snug text-stone-400">
-            Fonts: Nunito Sans, Nokora (SIL OFL). Output PDFs contain vector paths only: no fonts, no images.
+            Fonts are SIL Open Font License (Nunito Sans, Nokora and the other name fonts). Output PDFs contain vector paths only: no fonts, no images.
           </p>
         </aside>
         <section className="order-3 max-h-[70vh] min-h-[240px] border-t border-stone-200 bg-white md:order-none md:col-start-2 md:row-start-2 md:max-h-none md:min-h-0">

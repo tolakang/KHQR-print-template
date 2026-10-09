@@ -26,3 +26,6 @@ export const Type = (p: P) => <Icon {...p}><path d="M4 7V4h16v3M9 20h6M12 4v16" 
 export const FileOut = (p: P) => <Icon {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M12 18v-6m0 0-3 3m3-3 3 3" /></Icon>
 export const Alert = (p: P) => <Icon {...p}><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></Icon>
 export const Check = (p: P) => <Icon {...p}><path d="M20 6 9 17l-5-5" /></Icon>
+export const Minus = (p: P) => <Icon {...p}><path d="M5 12h14" /></Icon>
+export const Plus = (p: P) => <Icon {...p}><path d="M12 5v14M5 12h14" /></Icon>
+export const Maximize = (p: P) => <Icon {...p}><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></Icon>
