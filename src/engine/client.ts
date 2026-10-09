@@ -1,6 +1,7 @@
 /** Main-thread client for the engine worker. */
 import type { AssetKind, ExportResult, PreviewResult, QrFileStatus, RowInput, Settings } from './types'
 import type { Warning } from '../core/scene'
+import type { FontScript } from '../config/fonts'
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; progress?: (d: number, t: number) => void }
 
@@ -47,6 +48,7 @@ class EngineClient {
     return this.call<QrFileStatus[]>('addQrFiles', [files, redraw], progress).promise
   }
   reprocessRaster(redraw: boolean) { return this.call<QrFileStatus[]>('reprocessRaster', [redraw]).promise }
+  registerFont(id: string, script: FontScript, bytes: Uint8Array) { return this.call<{ ok: boolean; error?: string }>('registerFont', [id, script, bytes]).promise }
   preview(row: RowInput, s: Settings) { return this.call<PreviewResult>('preview', [row, s]).promise }
   export(rows: RowInput[], s: Settings, progress: Pending['progress']) {
     const c = this.call<ExportResult>('export', [rows, s], progress)

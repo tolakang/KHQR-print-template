@@ -12,6 +12,9 @@ export interface Settings {
   midPosition: 'follow' | 'fixed'
   showCorner: boolean
   showLogo: boolean
+  /** Merchant-name font ids (see config/fonts.ts). */
+  nameFontLatin: string
+  nameFontKhmer: string
   redrawRaster: boolean
   /** Draw the background artwork (and its edge fill); off for pre-printed stock. */
   background: boolean

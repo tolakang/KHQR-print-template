@@ -117,8 +117,22 @@ non-QR images, all EC levels, and module-exact coverage.
 
 ## UI refresh and fixes (after the first deploy)
 
-- **White Bakong logo** (`public/assets/bkw.svg`): white disc with the dark mark, made from
-  `bkb.svg` by swapping its two colors. The logo card has a Black / Red / White color picker.
+- **Blank Bakong logo** (`public/assets/bkw.svg`): the logo shape filled all white (a plain
+  white disc over the QR centre), made from `bkb.svg`. The logo card has a Black / Red / Blank
+  color picker.
+- **Merchant-name fonts.** Typography has an English and a Khmer font picker (catalog in
+  `src/config/fonts.ts`): Nunito Sans ExtraBold (guide), Inter, Montserrat, Poppins, Roboto;
+  Nokora SemiBold (guide), Kantumruy Pro, Noto Sans Khmer, Battambang, Hanuman, Moul. All SIL
+  OFL, from Google Fonts via `@expo-google-fonts` (licences in `public/fonts/licenses/`); the
+  worker loads a font only when it is chosen (`Engine.ensureFonts`). A user font (.ttf/.otf)
+  can be uploaded or dropped per script; it must contain the script's letters (A / ក), is kept
+  in IndexedDB and re-registered on load. A missing font falls back to the guide font with a
+  `font-missing` warning. The MID stays Nunito Sans Regular.
+- **Drag and drop** onto each asset card and font card (`src/ui/useFileDrop.ts`), as well as
+  the Excel and QR drop zones.
+- **Preview zoom.** The page fits the preview area and follows window resizes ("Fit"); − / +
+  buttons, Ctrl/⌘ + scroll or a trackpad pinch zoom from 10 % to 800 % of actual size, and the
+  % button jumps to 100 % (actual size at 96 dpi).
 - **No hairline around the artboard.** Where the background is narrower than the page (side
   gaps at Original size, bleed), viewers showed a light seam between the edge bands and the
   background's clipped edge (the artwork's white base layer anti-aliases over the band). Sampled
@@ -133,7 +147,7 @@ non-QR images, all EC levels, and module-exact coverage.
 
 | Check | Result |
 | --- | --- |
-| Unit tests (`npm test`) | 75 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background, hiding logo / corner frame |
+| Unit tests (`npm test`) | 79 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background, hiding logo / corner frame |
 | `pdffonts` / `pdfimages` on samples | 0 fonts, 0 images |
 | `pdfinfo -box` A6 + 3 mm bleed | Media 314.65 × 436.54, Trim 297.64 × 419.53 at 8.50 |
 | QR round trip (`npm run qa:qr`) | 160-char KHQR-style payload decodes with the logo on, EC L/M/Q, at 150 and 72 dpi |

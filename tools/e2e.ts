@@ -132,17 +132,40 @@ await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4d-hidden-logo-corner.png') })
 await page.getByRole('button', { name: 'Show bakong logo' }).click()
 // White logo
-await page.getByRole('button', { name: 'White', exact: true }).click()
-await page.waitForFunction(() => document.body.innerText.includes('bkw.svg (white)'), null, { timeout: 10000 })
+await page.getByRole('button', { name: 'Blank', exact: true }).click()
+await page.waitForFunction(() => document.body.innerText.includes('bkw.svg (blank, white)'), null, { timeout: 10000 })
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4e-white-logo.png') })
 await page.getByRole('button', { name: 'Black', exact: true }).click()
 await page.getByRole('button', { name: 'Show corner frame' }).click()
 
-// Typography panel
+// Drag and drop an SVG onto the corner frame card
+await page.evaluate(async () => {
+  const svg = await (await fetch('/assets/corner.svg')).text()
+  const dt = new DataTransfer()
+  dt.items.add(new File([svg], 'dropped-corner.svg', { type: 'image/svg+xml' }))
+  const card = [...document.querySelectorAll('div')].find((d) => d.className.includes('rounded-xl') && d.textContent?.startsWith('Corner frame'))!
+  for (const type of ['dragenter', 'dragover', 'drop']) card.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }))
+})
+await page.waitForFunction(() => document.body.innerText.includes('dropped-corner.svg'), null, { timeout: 10000 })
+console.log('asset drop ok')
+
+// Typography panel: fonts
 await page.getByRole('button', { name: /Typography/ }).click()
 await page.waitForTimeout(300)
+await page.getByLabel('Merchant name font: Khmer').selectOption('kantumruy-pro-700')
+await page.locator('input[type=file][accept*=".ttf"]').first().setInputFiles('public/fonts/Poppins_700Bold.ttf')
+await page.waitForFunction(() => document.body.innerText.includes('Uploaded: Poppins_700Bold.ttf'), null, { timeout: 10000 })
+await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4c-typography.png') })
+console.log('fonts ok')
+
+// Zoom
+await page.getByRole('button', { name: 'Zoom in' }).click()
+await page.getByRole('button', { name: 'Zoom in' }).click()
+await page.waitForTimeout(300)
+await page.screenshot({ path: join(out, '4f-zoomed.png') })
+await page.getByRole('button', { name: /Fit/ }).click()
 
 // Print: builds the combined PDF and loads it into the hidden print frame
 await page.getByRole('button', { name: /^Print/ }).click()
