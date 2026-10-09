@@ -79,7 +79,12 @@ try {
 console.log('ready + sample preview in', Date.now() - t0, 'ms')
 await page.screenshot({ path: join(out, '1-start.png') })
 
+// Settings panel tabs (cards view)
+const tab = (name: string) => page.getByRole('tab', { name: new RegExp(`^${name}`) }).click()
+if ((await page.getByRole('tab').count()) !== 4) throw new Error('expected 4 settings tabs')
+
 // Upload Excel + QR files
+await tab('Data')
 await page.locator('input[type=file][accept*=".xlsx"]').setInputFiles(xlsxPath)
 await page.locator('input[type=file][multiple][accept*=".png"]').setInputFiles(qrPaths)
 await page.waitForFunction(() => document.body.innerText.includes('5 QR files loaded'), null, { timeout: 30000 })
@@ -128,6 +133,7 @@ await page.waitForSelector('aside', { timeout: 5000 })
 console.log('flow view ok')
 
 // Export: A6 with bleed and crop marks
+await tab('Export')
 await page.locator('select').filter({ hasText: 'A6 (105' }).selectOption('A6')
 await page.getByRole('radio', { name: 'With bleed' }).click()
 await page.getByText('Crop marks', { exact: true }).click()
@@ -142,6 +148,7 @@ await page.waitForTimeout(300)
 console.log('status:', await page.locator('header').innerText())
 
 // Row range: Excel rows 2–4 → a 3-page PDF
+await tab('Data')
 await page.getByLabel('First row').fill('2')
 await page.getByLabel('Last row').fill('4')
 await page.waitForFunction(() => document.body.innerText.includes('3 of 6 rows in range'), null, { timeout: 5000 })
@@ -152,6 +159,7 @@ await dlr.saveAs(join(out, `range-${dlr.suggestedFilename()}`))
 await page.getByRole('button', { name: 'All', exact: true }).click()
 
 // Without background
+await tab('Export')
 await page.getByText('Include background', { exact: true }).click()
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4b-no-background.png') })
@@ -162,6 +170,7 @@ await dlb.saveAs(join(out, dlb.suggestedFilename()))
 await page.getByText('Include background', { exact: true }).click()
 
 // Hide / show the logo and corner frame
+await tab('Assets')
 await page.getByRole('button', { name: 'Hide bakong logo' }).click()
 await page.getByRole('button', { name: 'Hide corner frame' }).click()
 await page.waitForTimeout(800)
@@ -198,7 +207,7 @@ await page.waitForFunction(() => document.body.innerText.includes('dropped-corne
 console.log('asset drop ok')
 
 // Typography panel: fonts
-await page.getByRole('button', { name: /Typography/ }).click()
+await tab('Typography')
 await page.waitForTimeout(300)
 await page.getByLabel('Merchant name font: Khmer').selectOption('kantumruy-pro-700')
 await page.locator('input[type=file][accept*=".ttf"]').first().setInputFiles('public/fonts/Poppins_700Bold.ttf')
@@ -206,7 +215,7 @@ await page.waitForFunction(() => document.body.innerText.includes('Uploaded: Pop
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4c-typography.png') })
 console.log('fonts ok')
-await page.locator('section').filter({ hasText: 'Typography' }).getByRole('button', { name: 'Reset', exact: true }).click()
+await page.getByRole('tabpanel').getByRole('button', { name: 'Reset', exact: true }).click()
 await page.waitForTimeout(500)
 const khmerFont = await page.getByLabel('Merchant name font: Khmer').inputValue()
 if (khmerFont !== 'nokora-600') throw new Error(`typography reset failed: ${khmerFont}`)
@@ -236,6 +245,7 @@ await page.waitForFunction(() => document.getElementById('print-frame')?.getAttr
 console.log('print frame loaded')
 
 // ZIP per MID
+await tab('Export')
 await page.locator('select').filter({ hasText: 'One combined PDF' }).selectOption('zip')
 const [dl2] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.getByRole('button', { name: /^Download/ }).click()])
 await dl2.saveAs(join(out, dl2.suggestedFilename()))
@@ -263,6 +273,7 @@ console.log('downloaded', dl2.suggestedFilename())
   const bankPath = join(out, 'bank-generated.pdf')
   writeFileSync(bankPath, await bank.save())
 
+  await tab('Data')
   await page.getByRole('radio', { name: 'Generated PDF' }).click()
   await page.locator('input[type=file][accept*=".pdf"]').setInputFiles(bankPath)
   try {
@@ -299,6 +310,8 @@ console.log('downloaded', dl2.suggestedFilename())
 await page.setViewportSize({ width: 390, height: 844 })
 await page.waitForTimeout(400)
 await page.screenshot({ path: join(out, '5-mobile.png') })
+await tab('Export')
+await page.locator('aside').screenshot({ path: join(out, '5a-mobile-tabs.png') })
 await page.getByRole('radio', { name: 'Flow' }).click()
 await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
 await page.waitForTimeout(600)
