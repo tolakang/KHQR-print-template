@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO } from '../store/app'
+import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO, WHITE_LOGO } from '../store/app'
 import { useSettings, defaultSettings } from '../store/settings'
 import type { AssetKind } from '../engine/types'
 import { pageGeometry, type PageSizeName } from '../core/layout/page'
@@ -7,11 +7,18 @@ import { qrPrintSize } from '../core/qr/printSize'
 import { rowsInRange } from '../core/excel/read'
 import { layout, NAME_CHARS_MAX } from '../config'
 import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
+import { Eye, EyeOff, Upload, Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset } from './icons'
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 
 /** Setting that shows or hides each asset on the sticker (preview and export). */
 const VISIBLE_KEY = { background: 'background', logo: 'showLogo', corner: 'showCorner' } as const
+
+const LOGO_COLORS = [
+  { key: 'black', label: 'Black', swatch: 'bg-[#231f20]', file: DEFAULT_ASSETS.logo.file, name: DEFAULT_ASSETS.logo.name },
+  { key: 'red', label: 'Red', swatch: 'bg-[#d0021b]', file: RED_LOGO.file, name: RED_LOGO.name },
+  { key: 'white', label: 'White', swatch: 'bg-white ring-1 ring-inset ring-stone-300', file: WHITE_LOGO.file, name: WHITE_LOGO.name },
+] as const
 
 function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint: string }) {
   const a = useApp((s) => s.assets[kind])
@@ -21,49 +28,70 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
   const resetAsset = useApp((s) => s.resetAsset)
   const setAssetUrl = useApp((s) => s.setAssetUrl)
   return (
-    <div className="rounded-lg border border-stone-200 bg-white p-2.5">
+    <div className={`rounded-xl border bg-white p-3 transition-colors ${visible ? 'border-stone-200' : 'border-dashed border-stone-300 bg-stone-50/60'}`}>
       <div className="flex gap-3">
-        <div className={`flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px] ${visible ? '' : 'opacity-30'}`}>
+        <div className={`grid h-16 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px] p-1 transition-opacity ${visible ? '' : 'opacity-30 grayscale'}`}>
           {a && <img src={svgThumb(a.svg)} alt="" className="max-h-full max-w-full" />}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-sm font-medium text-stone-900">{label}</div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-stone-900">{label}</div>
+              <div className="truncate text-xs text-stone-500" title={a?.name}>{a?.name ?? 'Loading…'}</div>
+            </div>
             <button
               type="button"
-              className={`${btnCls('secondary')} !px-2 !py-0.5 text-xs`}
+              className={`${btnCls(visible ? 'secondary' : 'primary', 'sm')} !gap-1 !px-2 !py-1`}
               aria-pressed={!visible}
               aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
               onClick={() => setSettings({ [VISIBLE_KEY[kind]]: !visible })}
             >
+              {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               {visible ? 'Hide' : 'Show'}
             </button>
           </div>
-          {!visible && <div className="text-[11px] font-medium text-amber-700">Hidden: not in preview or export</div>}
-          <div className="truncate text-xs text-stone-500" title={a?.name}>{a?.name ?? 'Loading…'}</div>
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            <FileButton accept=".svg,image/svg+xml" onFiles={(f) => setAssetFile(kind, f[0])}>Upload SVG</FileButton>
-            {kind === 'logo' && (
-              <>
-                <button type="button" className={btnCls('ghost')} onClick={() => resetAsset('logo')}>Black</button>
-                <button type="button" className={btnCls('ghost')} onClick={() => setAssetUrl('logo', RED_LOGO.file, RED_LOGO.name)}>Red</button>
-              </>
-            )}
+          {!visible && <div className="mt-1 text-[11px] font-medium text-amber-700">Hidden: not in preview or export</div>}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <FileButton accept=".svg,image/svg+xml" onFiles={(f) => setAssetFile(kind, f[0])}>
+              <Upload className="h-3.5 w-3.5" />Upload SVG
+            </FileButton>
             {a && !a.isDefault && kind !== 'logo' && (
               <button type="button" className={btnCls('ghost')} onClick={() => resetAsset(kind)}>Reset</button>
             )}
           </div>
         </div>
       </div>
-      <p className="mt-1.5 text-[11px] leading-snug text-stone-500">{hint}</p>
-      {a?.warnings.map((w) => <div key={w.code} className="mt-1"><Notice>{w.message}</Notice></div>)}
+      {kind === 'logo' && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-xs font-medium text-stone-600">Color</span>
+          <div className="inline-flex flex-1 gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5" role="group" aria-label="Logo color">
+            {LOGO_COLORS.map((c) => {
+              const active = a?.name === c.name
+              return (
+                <button
+                  key={c.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => (c.key === 'black' ? resetAsset('logo') : setAssetUrl('logo', c.file, c.name))}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition ${active ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
+                >
+                  <span className={`h-3 w-3 rounded-full ${c.swatch}`} aria-hidden />
+                  {c.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      <p className="mt-2.5 text-[11px] leading-snug text-stone-500">{hint}</p>
+      {a?.warnings.map((w) => <div key={w.code} className="mt-1.5"><Notice>{w.message}</Notice></div>)}
     </div>
   )
 }
 
 export function AssetsPanel() {
   return (
-    <Section title="Assets">
+    <Section title="Assets" icon={<ImageIcon className="h-4 w-4" />}>
       <AssetSlot kind="background" label="Background" hint={`Fitted inside the trim with one uniform scale. Gaps and bleed are filled from the artwork's edge colors. Default: ${DEFAULT_ASSETS.background.name}.`} />
       <AssetSlot kind="logo" label="Bakong logo" hint="Always scaled to 32 × 32 pt and centered on the QR." />
       <AssetSlot kind="corner" label="Corner frame" hint="Scaled to 154.3 pt square around the QR." />
@@ -84,11 +112,11 @@ export function DataPanel() {
   const colOptions = [{ value: -1, label: '— none —' }, ...(sheet?.headers.map((h, i) => ({ value: i, label: h })) ?? [])]
 
   return (
-    <Section title="Data" badge={sheet ? <span className="rounded-full bg-stone-200 px-1.5 text-[10px] font-semibold text-stone-700">{sheet.rows.length}</span> : null}>
+    <Section title="Data" icon={<TableIcon className="h-4 w-4" />} badge={sheet ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand">{sheet.rows.length}</span> : null}>
       <div>
-        <div className="mb-1 text-xs font-medium text-stone-600">1 · Excel file</div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">1</span>Excel file</div>
         <DropZone onFiles={(f) => app.loadWorkbook(f[0])} accept={/\.(xlsx|xls|xlsm|csv|ods)$/i}>
-          <div className="mb-1.5 text-stone-500">{app.workbookName ?? 'Drop .xlsx / .xls / .csv here'}</div>
+          <div className="mb-2 text-stone-500">{app.workbookName ?? 'Drop .xlsx / .xls / .csv here'}</div>
           <FileButton accept=".xlsx,.xls,.xlsm,.csv,.ods" onFiles={(f) => app.loadWorkbook(f[0])}>{app.workbookName ? 'Replace file' : 'Choose file'}</FileButton>
         </DropZone>
       </div>
@@ -123,9 +151,9 @@ export function DataPanel() {
         </div>
       )}
       <div>
-        <div className="mb-1 text-xs font-medium text-stone-600">2 · QR files</div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">2</span>QR files</div>
         <DropZone onFiles={(f) => app.addQrFiles(f)} accept={/\.(svg|png|jpe?g|webp)$/i}>
-          <div className="mb-1.5 text-stone-500">
+          <div className="mb-2 text-stone-500">
             {app.qrBusy ? `Processing ${app.qrBusy[0]} / ${app.qrBusy[1]}…` : realQr.length ? `${realQr.length} QR files loaded` : 'Drop SVG / PNG / JPG QR files here'}
           </div>
           <div className="flex justify-center gap-1.5">
@@ -174,7 +202,7 @@ export function TypographyPanel() {
   const set = useSettings((x) => x.set)
   const d = defaultSettings()
   return (
-    <Section title="Typography" defaultOpen={false}>
+    <Section title="Typography" icon={<TypeIcon className="h-4 w-4" />} defaultOpen={false}>
       <p className="text-[11px] leading-snug text-stone-500">Name: Nunito Sans ExtraBold (English) + Nokora SemiBold (Khmer). MID: Nunito Sans Regular. All text is outlined.</p>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Name size"><NumberInput value={s.nameSizePt} onChange={(v) => set({ nameSizePt: v })} min={6} max={60} step={0.5} suffix="pt" /></Field>
@@ -188,7 +216,7 @@ export function TypographyPanel() {
         <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
       </Field>
       <p className="text-[11px] leading-snug text-stone-500">The whole name is limited to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included); extra words are dropped and flagged. It wraps by whole word at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
-      <button type="button" className={`${btnCls('secondary')} w-full`} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition })}>↺ Reset to guide values</button>
+      <button type="button" className={`${btnCls('secondary')} w-full`} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition })}><Reset className="h-4 w-4" />Reset to guide values</button>
     </Section>
   )
 }
@@ -209,7 +237,7 @@ export function ExportPanel() {
   const engineOpts = { pageSize: s.pageSize, customMm: s.customMm, bleed: false, bleedMm: 0, cropMarks: false, edgeFill: 'auto' as const }
   const qrSize = qrPrintSize(pageGeometry(engineOpts).stickerScale)
   return (
-    <Section title="Export">
+    <Section title="Export" icon={<FileOut className="h-4 w-4" />}>
       <Field label="Page size" hint="Artwork scales uniformly to fit, never stretched.">
         <Select value={s.pageSize} onChange={(v) => set({ pageSize: v })} options={PAGE_SIZES} />
       </Field>

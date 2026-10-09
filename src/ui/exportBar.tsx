@@ -6,6 +6,7 @@ import type { ExportResult } from '../engine/types'
 import { useRows } from './preview'
 import { rowsInRange } from '../core/excel/read'
 import { btnCls } from './controls'
+import { Download, Printer } from './icons'
 
 function saveBlob(bytes: Uint8Array, name: string, mime: string) {
   const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime }))
@@ -81,8 +82,8 @@ export function ExportBar() {
     <div className="flex items-center gap-2">
       {busy ? (
         <div className="flex items-center gap-2">
-          <div className="h-1.5 w-40 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={busy.done} aria-valuemax={busy.total}>
-            <div className="h-full bg-red-700 transition-[width]" style={{ width: `${(100 * busy.done) / Math.max(1, busy.total)}%` }} />
+          <div className="h-2 w-28 overflow-hidden rounded-full bg-stone-200 sm:w-40" role="progressbar" aria-valuenow={busy.done} aria-valuemax={busy.total}>
+            <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${(100 * busy.done) / Math.max(1, busy.total)}%` }} />
           </div>
           <span className="text-xs tabular-nums text-stone-600">{busy.done}/{busy.total}</span>
           <button type="button" className={btnCls('ghost')} onClick={() => cancelRef.current()}>Cancel</button>
@@ -95,10 +96,12 @@ export function ExportBar() {
               {result.skipped.length > 0 && <span className="text-amber-700"> · {result.skipped.length} skipped (no QR)</span>}
             </span>
           )}
-          {err && <span className="text-xs text-red-700">{err}</span>}
-          <button type="button" className={btnCls('secondary')} disabled={!ready} onClick={() => run('print')} title="Opens the browser print dialog">Print…</button>
+          {err && <span className="max-w-56 text-xs text-brand">{err}</span>}
+          <button type="button" className={btnCls('secondary')} disabled={!ready} onClick={() => run('print')} title="Opens the browser print dialog" aria-label="Print…">
+            <Printer className="h-4 w-4" /><span className="hidden sm:inline">Print…</span>
+          </button>
           <button type="button" className={btnCls('primary')} disabled={!ready} onClick={() => run('download')}>
-            Download<span className="hidden sm:inline"> PDF</span> <span className="hidden font-normal opacity-80 sm:inline">({label})</span>
+            <Download className="h-4 w-4" />Download<span className="hidden sm:inline"> PDF</span> <span className="hidden font-medium opacity-80 sm:inline">({label})</span>
           </button>
         </>
       )}

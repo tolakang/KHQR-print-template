@@ -120,6 +120,7 @@ export function buildPage(
     const needs = bgRect.x - g.bleed.x > 0.01 || bgRect.y - g.bleed.y > 0.01 ||
       g.bleed.x + g.bleed.w - (bgRect.x + bgRect.w) > 0.01 ||
       g.bleed.y + g.bleed.h - (bgRect.y + bgRect.h) > 0.01
+    let bands: SceneItem[] = []
     if (needs) {
       let edges: EdgeBands
       if (o.edgeFill === 'auto') {
@@ -135,8 +136,11 @@ export function buildPage(
           right: [{ from: bgRect.y, to: bgRect.y + bgRect.h, color: c }],
         }
       }
-      items.push(...edgeFill(g.bleed, bgRect, edges))
+      bands = edgeFill(g.bleed, bgRect, edges, o.edgeFill === 'auto' ? 0.3 : 0)
     }
+    // A single chosen color goes under the background; sampled bands match the
+    // artwork's edge, so they go on top and overlap it slightly (see edgeFill).
+    if (o.edgeFill !== 'auto') items.push(...bands)
     // Shared across pages as one Form XObject (same size → same key).
     items.push({
       kind: 'group',
@@ -147,6 +151,7 @@ export function buildPage(
         { kind: 'clipPop' },
       ],
     })
+    if (o.edgeFill === 'auto') items.push(...bands)
   }
 
   // Sticker artwork: one uniform scale, centered in the trim box.
@@ -198,7 +203,12 @@ function cropMarks(g: PageGeometry): SceneItem[] {
  * color of the top/bottom band at that end. First/last bands stretch to the
  * corners. A tiny overlap avoids hairline gaps.
  */
-function edgeFill(B: Rect, bg: Rect, e: EdgeBands): SceneItem[] {
+/**
+ * Bands between the bleed edge and the background. `under` (pt) extends them
+ * over the background's edge: drawn on top of it, this hides the light hairline
+ * a viewer's anti-aliasing leaves where the clipped artwork meets the band.
+ */
+function edgeFill(B: Rect, bg: Rect, e: EdgeBands, under: number): SceneItem[] {
   const out: SceneItem[] = []
   const ov = 0.05
   const left = bg.x - B.x
@@ -213,22 +223,22 @@ function edgeFill(B: Rect, bg: Rect, e: EdgeBands): SceneItem[] {
     }))
   if (left > 0.01) {
     for (const b of stretch(e.left, B.y, B.y + B.h)) {
-      out.push(fillRect({ x: B.x, y: b.from, w: left + ov, h: b.to - b.from }, b.color))
+      out.push(fillRect({ x: B.x, y: b.from, w: left + Math.max(ov, under), h: b.to - b.from }, b.color))
     }
   }
   if (right > 0.01) {
     for (const b of stretch(e.right, B.y, B.y + B.h)) {
-      out.push(fillRect({ x: bg.x + bg.w - ov, y: b.from, w: right + ov, h: b.to - b.from }, b.color))
+      out.push(fillRect({ x: bg.x + bg.w - Math.max(ov, under), y: b.from, w: right + Math.max(ov, under), h: b.to - b.from }, b.color))
     }
   }
   if (top > 0.01) {
     for (const b of stretch(e.top, B.x, B.x + B.w)) {
-      out.push(fillRect({ x: b.from, y: B.y, w: b.to - b.from, h: top + ov }, b.color))
+      out.push(fillRect({ x: b.from, y: B.y, w: b.to - b.from, h: top + Math.max(ov, under) }, b.color))
     }
   }
   if (bottom > 0.01) {
     for (const b of stretch(e.bottom, B.x, B.x + B.w)) {
-      out.push(fillRect({ x: b.from, y: bg.y + bg.h - ov, w: b.to - b.from, h: bottom + ov }, b.color))
+      out.push(fillRect({ x: b.from, y: bg.y + bg.h - Math.max(ov, under), w: b.to - b.from, h: bottom + Math.max(ov, under) }, b.color))
     }
   }
   return out

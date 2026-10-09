@@ -43,6 +43,13 @@ describe('showing and hiding assets', () => {
     expect(e.preview(row, { ...s, showCorner: false }).svg.length).toBeLessThan(all)
     expect(defaultSettings()).toMatchObject({ showLogo: true, showCorner: true })
   })
+  it('draws the white logo: white disc, dark mark', () => {
+    e.setAsset('logo', readFileSync('public/assets/bkw.svg', 'utf8'))
+    const svg = e.preview(row, defaultSettings()).svg
+    e.setAsset('logo', readFileSync('public/assets/bkb.svg', 'utf8'))
+    expect(e.assetWarnings('logo')).toEqual([])
+    expect(svg).toContain('fill="#231f20"')
+  })
   it('names the file and still exports every page', async () => {
     const s = { ...defaultSettings(), background: false }
     const r = await e.export([row], s, () => {}, () => false)

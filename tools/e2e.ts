@@ -131,6 +131,12 @@ await page.getByRole('button', { name: 'Hide corner frame' }).click()
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '4d-hidden-logo-corner.png') })
 await page.getByRole('button', { name: 'Show bakong logo' }).click()
+// White logo
+await page.getByRole('button', { name: 'White', exact: true }).click()
+await page.waitForFunction(() => document.body.innerText.includes('bkw.svg (white)'), null, { timeout: 10000 })
+await page.waitForTimeout(800)
+await page.screenshot({ path: join(out, '4e-white-logo.png') })
+await page.getByRole('button', { name: 'Black', exact: true }).click()
 await page.getByRole('button', { name: 'Show corner frame' }).click()
 
 // Typography panel
