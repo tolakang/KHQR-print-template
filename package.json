@@ -11,11 +11,14 @@
     "test": "vitest run",
     "typecheck": "tsc -b",
     "sample": "tsx tools/sample.ts out",
-    "qa:qr": "tsx tools/qr-roundtrip.ts out/qr-roundtrip.pdf && pdftoppm -png -r 150 out/qr-roundtrip.pdf out/qr && tsx tools/qr-scan.ts out/qr-1.png out/qr-2.png out/qr-3.png"
+    "qa:qr": "tsx tools/qr-roundtrip.ts out/qr-roundtrip.pdf && pdftoppm -png -r 150 out/qr-roundtrip.pdf out/qr && tsx tools/qr-scan.ts out/qr-1.png out/qr-2.png out/qr-3.png",
+    "e2e": "npm run build && tsx tools/e2e.ts out/e2e"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.12",
+    "fflate": "^0.8.3",
     "harfbuzzjs": "^1.6.3",
+    "idb-keyval": "^6.3.0",
     "pdf-lib": "^1.17.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

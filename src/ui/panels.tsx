@@ -1,0 +1,233 @@
+import { useMemo } from 'react'
+import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO } from '../store/app'
+import { useSettings, defaultSettings } from '../store/settings'
+import type { AssetKind } from '../engine/types'
+import type { PageSizeName } from '../core/layout/page'
+import { layout } from '../config'
+import { Section, Field, NumberInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
+
+const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+
+function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint: string }) {
+  const a = useApp((s) => s.assets[kind])
+  const setAssetFile = useApp((s) => s.setAssetFile)
+  const resetAsset = useApp((s) => s.resetAsset)
+  const setAssetUrl = useApp((s) => s.setAssetUrl)
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-2.5">
+      <div className="flex gap-3">
+        <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px]">
+          {a && <img src={svgThumb(a.svg)} alt="" className="max-h-full max-w-full" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-stone-900">{label}</div>
+          <div className="truncate text-xs text-stone-500" title={a?.name}>{a?.name ?? 'Loading…'}</div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            <FileButton accept=".svg,image/svg+xml" onFiles={(f) => setAssetFile(kind, f[0])}>Upload SVG</FileButton>
+            {kind === 'logo' && (
+              <>
+                <button type="button" className={btnCls('ghost')} onClick={() => resetAsset('logo')}>Black</button>
+                <button type="button" className={btnCls('ghost')} onClick={() => setAssetUrl('logo', RED_LOGO.file, RED_LOGO.name)}>Red</button>
+              </>
+            )}
+            {a && !a.isDefault && kind !== 'logo' && (
+              <button type="button" className={btnCls('ghost')} onClick={() => resetAsset(kind)}>Reset</button>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="mt-1.5 text-[11px] leading-snug text-stone-500">{hint}</p>
+      {a?.warnings.map((w) => <div key={w.code} className="mt-1"><Notice>{w.message}</Notice></div>)}
+    </div>
+  )
+}
+
+export function AssetsPanel() {
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  return (
+    <Section title="Assets">
+      <AssetSlot kind="background" label="Background" hint={`Fitted inside the trim with one uniform scale. Gaps and bleed are filled from the artwork's edge colors. Default: ${DEFAULT_ASSETS.background.name}.`} />
+      <AssetSlot kind="logo" label="Bakong logo" hint="Always scaled to 32 × 32 pt and centered on the QR." />
+      <AssetSlot kind="corner" label="Corner frame" hint="Scaled to 154.3 pt square around the QR." />
+      <Toggle checked={s.showCorner} onChange={(v) => set({ showCorner: v })} label="Show corner frame" />
+    </Section>
+  )
+}
+
+export function DataPanel() {
+  const app = useApp()
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  const sheet = app.sheets[app.sheetIndex]
+  const derived = useMemo(() => deriveRows(app), [app.sheets, app.sheetIndex, app.cols, app.qrFiles]) // eslint-disable-line react-hooks/exhaustive-deps
+  const realQr = app.qrFiles.filter((q) => !q.name.startsWith('__'))
+  const failed = realQr.filter((q) => !q.ok)
+  const rebuilt = realQr.filter((q) => q.method === 'rebuilt' || q.method === 'traced')
+  const matched = sheet ? derived.rows.filter((r) => r.qrFile && realQr.find((q) => q.name === r.qrFile && q.ok)).length : 0
+  const colOptions = [{ value: -1, label: '— none —' }, ...(sheet?.headers.map((h, i) => ({ value: i, label: h })) ?? [])]
+
+  return (
+    <Section title="Data" badge={sheet ? <span className="rounded-full bg-stone-200 px-1.5 text-[10px] font-semibold text-stone-700">{sheet.rows.length}</span> : null}>
+      <div>
+        <div className="mb-1 text-xs font-medium text-stone-600">1 · Excel file</div>
+        <DropZone onFiles={(f) => app.loadWorkbook(f[0])} accept={/\.(xlsx|xls|xlsm|csv|ods)$/i}>
+          <div className="mb-1.5 text-stone-500">{app.workbookName ?? 'Drop .xlsx / .xls / .csv here'}</div>
+          <FileButton accept=".xlsx,.xls,.xlsm,.csv,.ods" onFiles={(f) => app.loadWorkbook(f[0])}>{app.workbookName ? 'Replace file' : 'Choose file'}</FileButton>
+        </DropZone>
+      </div>
+      {sheet && (
+        <div className="grid grid-cols-2 gap-2">
+          {app.sheets.length > 1 && (
+            <div className="col-span-2">
+              <Field label="Sheet">
+                <Select value={app.sheetIndex} onChange={(v) => app.setSheet(v)} options={app.sheets.map((sh, i) => ({ value: i, label: `${sh.name} (${sh.rows.length})` }))} />
+              </Field>
+            </div>
+          )}
+          <Field label="Merchant name column"><Select value={app.cols.name} onChange={(v) => app.setCols({ name: v })} options={colOptions} /></Field>
+          <Field label="MID column"><Select value={app.cols.mid} onChange={(v) => app.setCols({ mid: v })} options={colOptions} /></Field>
+          <div className="col-span-2">
+            <Field label="QR file name column" hint="If none, QR files are matched by MID (e.g. 124092620291906.svg or KHQR_124092620291906.png).">
+              <Select value={app.cols.qr} onChange={(v) => app.setCols({ qr: v })} options={colOptions} />
+            </Field>
+          </div>
+        </div>
+      )}
+      <div>
+        <div className="mb-1 text-xs font-medium text-stone-600">2 · QR files</div>
+        <DropZone onFiles={(f) => app.addQrFiles(f)} accept={/\.(svg|png|jpe?g|webp)$/i}>
+          <div className="mb-1.5 text-stone-500">
+            {app.qrBusy ? `Processing ${app.qrBusy[0]} / ${app.qrBusy[1]}…` : realQr.length ? `${realQr.length} QR files loaded` : 'Drop SVG / PNG / JPG QR files here'}
+          </div>
+          <div className="flex justify-center gap-1.5">
+            <FileButton accept=".svg,.png,.jpg,.jpeg,.webp" multiple onFiles={(f) => app.addQrFiles(f)}>Add files</FileButton>
+            <FileButton directory onFiles={(f) => app.addQrFiles(f)}>Add folder</FileButton>
+            {realQr.length > 0 && <button type="button" className={btnCls('ghost')} onClick={() => app.clearQrFiles()}>Clear</button>}
+          </div>
+        </DropZone>
+      </div>
+      <Toggle
+        checked={s.redrawRaster}
+        onChange={(v) => { set({ redrawRaster: v }); app.reprocessRaster(v) }}
+        label="Redraw raster QR as vector"
+        hint="PNG/JPG QRs are decoded, redrawn as vector modules and re-verified. SVG QRs are used as they are."
+      />
+      {sheet && (
+        <div className="space-y-1">
+          <Notice tone={matched === sheet.rows.length ? 'ok' : 'warn'}>
+            {matched} of {sheet.rows.length} rows matched to a QR file.
+            {derived.unmatchedFiles.filter((f) => !f.startsWith('__')).length > 0 && ` ${derived.unmatchedFiles.filter((f) => !f.startsWith('__')).length} QR files not used by any row.`}
+          </Notice>
+          {derived.ambiguousRows.length > 0 && <Notice>{derived.ambiguousRows.length} rows match more than one QR file.</Notice>}
+        </div>
+      )}
+      {rebuilt.length > 0 && <Notice tone="info">{rebuilt.length} raster QR files redrawn as vector and verified.</Notice>}
+      {failed.length > 0 && (
+        <Notice tone="error">
+          <div className="font-medium">{failed.length} QR files can't be used:</div>
+          <ul className="mt-0.5 max-h-24 list-disc overflow-auto pl-4">
+            {failed.slice(0, 50).map((q) => <li key={q.name}><span className="font-mono">{q.name}</span>: {q.error}</li>)}
+          </ul>
+        </Notice>
+      )}
+    </Section>
+  )
+}
+
+export function TypographyPanel() {
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  const d = defaultSettings()
+  return (
+    <Section title="Typography" defaultOpen={false}>
+      <p className="text-[11px] leading-snug text-stone-500">Name: Nunito Sans ExtraBold (English) + Nokora SemiBold (Khmer). MID: Nunito Sans Regular. All text is outlined.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Name size"><NumberInput value={s.nameSizePt} onChange={(v) => set({ nameSizePt: v })} min={6} max={60} step={0.5} suffix="pt" /></Field>
+        <Field label="MID size"><NumberInput value={s.midSizePt} onChange={(v) => set({ midSizePt: v })} min={4} max={30} step={0.5} suffix="pt" /></Field>
+        <Field label="Name chars / line"><NumberInput value={s.limits.nameChars} onChange={(v) => set({ limits: { ...s.limits, nameChars: Math.round(v) } })} min={1} max={200} /></Field>
+        <Field label="Name lines (max)"><NumberInput value={s.limits.nameLines} onChange={(v) => set({ limits: { ...s.limits, nameLines: Math.round(v) } })} min={1} max={4} /></Field>
+        <Field label="MID max chars"><NumberInput value={s.limits.mid} onChange={(v) => set({ limits: { ...s.limits, mid: Math.round(v) } })} min={1} max={64} /></Field>
+        <Field label="Side safe margin"><NumberInput value={s.safeMarginPt} onChange={(v) => set({ safeMarginPt: v })} min={0} max={100} step={0.5} suffix="pt" /></Field>
+      </div>
+      <Field label="MID position" group>
+        <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
+      </Field>
+      <p className="text-[11px] leading-snug text-stone-500">Names wrap by whole word at {s.limits.nameChars} characters or the safe width, max {s.limits.nameLines} lines; extra words are dropped and flagged. Text is never shrunk automatically.</p>
+      <button type="button" className={btnCls('ghost')} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition })}>Reset to guide values</button>
+    </Section>
+  )
+}
+
+const PAGE_SIZES: { value: PageSizeName; label: string }[] = [
+  { value: 'original', label: `Original (${layout.artboard.w} × ${layout.artboard.h} pt)` },
+  { value: 'A3', label: 'A3 (297 × 420 mm)' },
+  { value: 'A4', label: 'A4 (210 × 297 mm)' },
+  { value: 'A5', label: 'A5 (148 × 210 mm)' },
+  { value: 'A6', label: 'A6 (105 × 148 mm)' },
+  { value: 'A7', label: 'A7 (74 × 105 mm)' },
+  { value: 'custom', label: 'Custom…' },
+]
+
+export function ExportPanel() {
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  return (
+    <Section title="Export">
+      <Field label="Page size" hint="Artwork scales uniformly to fit, never stretched.">
+        <Select value={s.pageSize} onChange={(v) => set({ pageSize: v })} options={PAGE_SIZES} />
+      </Field>
+      {s.pageSize === 'custom' && (
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Width"><NumberInput value={s.customMm.w} onChange={(v) => set({ customMm: { ...s.customMm, w: v } })} min={20} max={1000} suffix="mm" /></Field>
+          <Field label="Height"><NumberInput value={s.customMm.h} onChange={(v) => set({ customMm: { ...s.customMm, h: v } })} min={20} max={1000} suffix="mm" /></Field>
+        </div>
+      )}
+      <Field label="Cut" group>
+        <Segmented value={s.bleed ? 'bleed' : 'trim'} onChange={(v) => set({ bleed: v === 'bleed' })} options={[{ value: 'trim', label: 'No bleed (trimmed)' }, { value: 'bleed', label: 'With bleed' }]} />
+      </Field>
+      {s.bleed && (
+        <div className="space-y-2 rounded-md bg-stone-50 p-2">
+          {!s.bleedPerSide ? (
+            <Field label="Bleed" hint="Default 3 mm. 0–10 mm.">
+              <NumberInput value={s.bleedMm} onChange={(v) => set({ bleedMm: v })} min={0} max={10} step={0.5} suffix="mm" />
+            </Field>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {(['top', 'right', 'bottom', 'left'] as const).map((k) => (
+                <Field key={k} label={k[0].toUpperCase() + k.slice(1)}>
+                  <NumberInput value={s.bleedSidesMm[k]} onChange={(v) => set({ bleedSidesMm: { ...s.bleedSidesMm, [k]: v } })} min={0} max={10} step={0.5} suffix="mm" />
+                </Field>
+              ))}
+            </div>
+          )}
+          <Toggle checked={s.bleedPerSide} onChange={(v) => set({ bleedPerSide: v })} label="Different bleed per side" />
+          <Field label="Bleed fill" group>
+            <Segmented value={s.edgeFill} onChange={(v) => set({ edgeFill: v })} options={[{ value: 'auto', label: 'Extend edge colors' }, { value: 'color', label: 'One color' }]} />
+          </Field>
+          {s.edgeFill === 'color' && (
+            <div className="flex items-center gap-2">
+              <input type="color" value={s.edgeColor} onChange={(e) => set({ edgeColor: e.target.value })} className="h-8 w-10 cursor-pointer rounded border border-stone-300" aria-label="Bleed color" />
+              <span className="font-mono text-xs text-stone-600">{s.edgeColor}</span>
+            </div>
+          )}
+        </div>
+      )}
+      <Toggle checked={s.cropMarks} onChange={(v) => set({ cropMarks: v })} label="Crop marks" hint="Adds a slug outside the bleed for the marks." />
+      <Field label="Download as">
+        <Select
+          value={s.output}
+          onChange={(v) => set({ output: v })}
+          options={[
+            { value: 'combined', label: 'One combined PDF' },
+            { value: 'zip', label: 'ZIP of single PDFs (named by MID)' },
+            { value: 'split', label: 'ZIP of PDFs split by page count' },
+          ]}
+        />
+      </Field>
+      {s.output === 'split' && (
+        <Field label="Pages per file"><NumberInput value={s.splitEvery} onChange={(v) => set({ splitEvery: Math.round(v) })} min={1} max={10000} /></Field>
+      )}
+    </Section>
+  )
+}

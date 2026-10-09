@@ -1,0 +1,199 @@
+import { create } from 'zustand'
+import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval'
+import QRCode from 'qrcode'
+import { engine } from '../engine/client'
+import type { AssetKind, QrFileStatus, RowInput } from '../engine/types'
+import type { Warning } from '../core/scene'
+import { readWorkbook, guessColumns, matchQrFiles, type SheetData, type ColumnMap } from '../core/excel/read'
+import { useSettings } from './settings'
+
+export interface AssetState {
+  name: string
+  svg: string
+  isDefault: boolean
+  warnings: Warning[]
+}
+
+export const DEFAULT_ASSETS: Record<AssetKind, { file: string; name: string }> = {
+  background: { file: 'assets/a5.svg', name: 'a5.svg (default)' },
+  logo: { file: 'assets/bkb.svg', name: 'bkb.svg (default, black)' },
+  corner: { file: 'assets/corner.svg', name: 'corner.svg (default)' },
+}
+export const RED_LOGO = { file: 'assets/bkc.svg', name: 'bkc.svg (red)' }
+
+export const SAMPLE_QR = '__sample__.svg'
+const SAMPLE_ROW: RowInput = {
+  index: -1, excelRow: 0, name: 'The Pizza Company Sihanou', mid: '124092620291906', midImprecise: false, qrFile: SAMPLE_QR,
+}
+
+interface AppState {
+  ready: boolean
+  error: string | null
+  assets: Partial<Record<AssetKind, AssetState>>
+  workbookName: string | null
+  sheets: SheetData[]
+  sheetIndex: number
+  cols: ColumnMap
+  qrFiles: QrFileStatus[]
+  qrBusy: [number, number] | null
+  selected: number
+  init: () => Promise<void>
+  setAssetFile: (kind: AssetKind, file: File) => Promise<void>
+  setAssetUrl: (kind: AssetKind, url: string, name: string) => Promise<void>
+  resetAsset: (kind: AssetKind) => Promise<void>
+  loadWorkbook: (file: File) => Promise<void>
+  setSheet: (i: number) => void
+  setCols: (c: Partial<ColumnMap>) => void
+  addQrFiles: (files: File[]) => Promise<void>
+  clearQrFiles: () => Promise<void>
+  reprocessRaster: (redraw: boolean) => Promise<void>
+  select: (i: number) => void
+}
+
+async function fetchText(url: string) {
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`Could not load ${url}`)
+  return r.text()
+}
+
+export const useApp = create<AppState>()((set, get) => ({
+  ready: false,
+  error: null,
+  assets: {},
+  workbookName: null,
+  sheets: [],
+  sheetIndex: 0,
+  cols: { name: -1, mid: -1, qr: -1 },
+  qrFiles: [],
+  qrBusy: null,
+  selected: -1,
+
+  init: async () => {
+    try {
+      await engine().ready()
+      for (const kind of ['background', 'logo', 'corner'] as AssetKind[]) {
+        const saved = await idbGet<{ name: string; svg: string }>(`asset:${kind}`).catch(() => undefined)
+        const svg = saved?.svg ?? (await fetchText(DEFAULT_ASSETS[kind].file))
+        const name = saved?.name ?? DEFAULT_ASSETS[kind].name
+        const warnings = await engine().setAsset(kind, svg)
+        set((st) => ({ assets: { ...st.assets, [kind]: { name, svg, isDefault: !saved, warnings } } }))
+      }
+      const sample = await QRCode.toString('KHQR SAMPLE - replace with your QR files', { type: 'svg', margin: 4, errorCorrectionLevel: 'M' })
+      await engine().addQrFiles([{ name: SAMPLE_QR, bytes: new TextEncoder().encode(sample), mime: 'image/svg+xml' }], true)
+      set({ ready: true })
+    } catch (e) {
+      set({ error: (e as Error).message })
+    }
+  },
+
+  setAssetFile: async (kind, file) => {
+    if (!/\.svg$/i.test(file.name) && file.type !== 'image/svg+xml') {
+      set({ error: `${file.name}: ${kind} must be an SVG file (vector only).` })
+      return
+    }
+    const svg = await file.text()
+    try {
+      const warnings = await engine().setAsset(kind, svg)
+      await idbSet(`asset:${kind}`, { name: file.name, svg }).catch(() => undefined)
+      set((st) => ({ error: null, assets: { ...st.assets, [kind]: { name: file.name, svg, isDefault: false, warnings } } }))
+    } catch (e) {
+      set({ error: `${file.name}: ${(e as Error).message}` })
+    }
+  },
+
+  setAssetUrl: async (kind, url, name) => {
+    const svg = await fetchText(url)
+    const warnings = await engine().setAsset(kind, svg)
+    await idbSet(`asset:${kind}`, { name, svg }).catch(() => undefined)
+    set((st) => ({ assets: { ...st.assets, [kind]: { name, svg, isDefault: false, warnings } } }))
+  },
+
+  resetAsset: async (kind) => {
+    await idbDel(`asset:${kind}`).catch(() => undefined)
+    const svg = await fetchText(DEFAULT_ASSETS[kind].file)
+    const warnings = await engine().setAsset(kind, svg)
+    set((st) => ({ assets: { ...st.assets, [kind]: { name: DEFAULT_ASSETS[kind].name, svg, isDefault: true, warnings } } }))
+  },
+
+  loadWorkbook: async (file) => {
+    try {
+      const sheets = readWorkbook(new Uint8Array(await file.arrayBuffer()))
+      const idx = Math.max(0, sheets.findIndex((s) => s.rows.length > 0))
+      if (!sheets.length || !sheets[idx]?.rows.length) throw new Error('No data rows found.')
+      set({ workbookName: file.name, sheets, sheetIndex: idx, cols: guessColumns(sheets[idx].headers), selected: 0, error: null })
+    } catch (e) {
+      set({ error: `${file.name}: ${(e as Error).message}` })
+    }
+  },
+
+  setSheet: (i) => {
+    const sh = get().sheets[i]
+    if (sh) set({ sheetIndex: i, cols: guessColumns(sh.headers), selected: 0 })
+  },
+
+  setCols: (c) => set((st) => ({ cols: { ...st.cols, ...c } })),
+
+  addQrFiles: async (files) => {
+    const accepted = files.filter((f) => /\.(svg|png|jpe?g|webp)$/i.test(f.name))
+    if (!accepted.length) return
+    set({ qrBusy: [0, accepted.length] })
+    const payload = await Promise.all(accepted.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()), mime: f.type })))
+    const redraw = useSettings.getState().s.redrawRaster
+    const BATCH = 50
+    const results: QrFileStatus[] = []
+    for (let i = 0; i < payload.length; i += BATCH) {
+      const chunk = payload.slice(i, i + BATCH)
+      results.push(...(await engine().addQrFiles(chunk, redraw)))
+      set({ qrBusy: [Math.min(i + BATCH, payload.length), payload.length] })
+    }
+    set((st) => {
+      const map = new Map(st.qrFiles.map((q) => [q.name, q]))
+      for (const r of results) map.set(r.name, r)
+      return { qrFiles: [...map.values()], qrBusy: null }
+    })
+  },
+
+  clearQrFiles: async () => {
+    await engine().clearQrs()
+    set({ qrFiles: [] })
+    const sample = await QRCode.toString('KHQR SAMPLE - replace with your QR files', { type: 'svg', margin: 4 })
+    await engine().addQrFiles([{ name: SAMPLE_QR, bytes: new TextEncoder().encode(sample), mime: 'image/svg+xml' }], true)
+  },
+
+  reprocessRaster: async (redraw) => {
+    const results = await engine().reprocessRaster(redraw)
+    set((st) => {
+      const map = new Map(st.qrFiles.map((q) => [q.name, q]))
+      for (const r of results) if (map.has(r.name)) map.set(r.name, r)
+      return { qrFiles: [...map.values()] }
+    })
+  },
+
+  select: (i) => set({ selected: i }),
+}))
+
+/** Rows derived from the current sheet, column map and matched QR files. */
+export function deriveRows(st: Pick<AppState, 'sheets' | 'sheetIndex' | 'cols' | 'qrFiles'>): {
+  rows: RowInput[]
+  unmatchedFiles: string[]
+  ambiguousRows: number[]
+} {
+  const sheet = st.sheets[st.sheetIndex]
+  if (!sheet) return { rows: [SAMPLE_ROW], unmatchedFiles: [], ambiguousRows: [] }
+  const names = st.qrFiles.map((q) => q.name)
+  const m = matchQrFiles(sheet, st.cols, names)
+  const rows = sheet.rows.map((cells, i): RowInput => {
+    const mid = st.cols.mid >= 0 ? cells[st.cols.mid] : undefined
+    return {
+      index: i,
+      excelRow: sheet.rowNumbers[i],
+      name: st.cols.name >= 0 ? cells[st.cols.name]?.text ?? '' : '',
+      mid: mid?.text ?? '',
+      midImprecise: mid?.imprecise ?? false,
+      qrFile: m.byRow[i],
+    }
+  })
+  return { rows, unmatchedFiles: m.unmatchedFiles, ambiguousRows: m.ambiguousRows }
+}
+
+export { SAMPLE_ROW }
