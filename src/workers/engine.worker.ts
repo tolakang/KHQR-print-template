@@ -60,7 +60,7 @@ self.onmessage = async (ev: MessageEvent) => {
         result = true
         break
       case 'setAsset':
-        result = e.setAsset(args[0] as never, args[1] as string | null)
+        result = e.setAsset(args[0] as never, args[1] as string | null, args[2] as boolean)
         break
       case 'clearQrs':
         e.clearQrs()

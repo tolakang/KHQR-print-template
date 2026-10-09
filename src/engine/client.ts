@@ -42,7 +42,7 @@ class EngineClient {
   }
 
   ready() { return this.call<boolean>('ready', []).promise }
-  setAsset(kind: AssetKind, svg: string | null) { return this.call<Warning[]>('setAsset', [kind, svg]).promise }
+  setAsset(kind: AssetKind, svg: string | null, isDefault = false) { return this.call<Warning[]>('setAsset', [kind, svg, isDefault]).promise }
   clearQrs() { return this.call<boolean>('clearQrs', []).promise }
   addQrFiles(files: { name: string; bytes: Uint8Array; mime: string }[], redraw: boolean, progress?: Pending['progress']) {
     return this.call<QrFileStatus[]>('addQrFiles', [files, redraw], progress).promise

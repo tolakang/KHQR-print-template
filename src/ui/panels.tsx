@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO, WHITE_LOGO } from '../store/app'
 import { useSettings, defaultSettings } from '../store/settings'
 import type { AssetKind } from '../engine/types'
@@ -21,6 +21,74 @@ const LOGO_COLORS = [
   { key: 'red', label: 'Red', swatch: 'bg-[#d0021b]', file: RED_LOGO.file, name: RED_LOGO.name },
   { key: 'white', label: 'Blank', swatch: 'bg-white ring-1 ring-inset ring-stone-300', file: WHITE_LOGO.file, name: WHITE_LOGO.name },
 ] as const
+
+/** #rrggbb text box; keeps what is typed until it is a full color. */
+function HexInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  return (
+    <input
+      type="text"
+      value={draft ?? value}
+      placeholder="original"
+      maxLength={7}
+      onChange={(e) => {
+        const v = e.target.value.trim()
+        setDraft(v)
+        if (/^#?[0-9a-f]{6}$/i.test(v)) onChange(('#' + v.replace('#', '')).toLowerCase())
+      }}
+      onBlur={() => setDraft(null)}
+      className="w-24 rounded-lg border border-stone-200 px-2.5 py-2 font-mono text-xs uppercase text-stone-700 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
+      aria-label="Corner color hex"
+    />
+  )
+}
+
+function CornerControls({ builtIn }: { builtIn: boolean }) {
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  const max = layout.corner.arm
+  const color = s.cornerColor || (builtIn ? layout.corner.color : '#000000')
+  return (
+    <div className="mt-3 space-y-3 border-t border-stone-100 pt-3">
+      <div className={builtIn ? '' : 'opacity-50'}>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-xs font-medium text-stone-700">Corner radius</span>
+          <button type="button" className={btnCls('ghost')} disabled={!builtIn || s.cornerRadiusPt === layout.corner.radius} onClick={() => set({ cornerRadiusPt: layout.corner.radius })}>Guide ({layout.corner.radius} pt)</button>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={max}
+            step={0.5}
+            value={Math.min(max, s.cornerRadiusPt)}
+            disabled={!builtIn}
+            onChange={(e) => set({ cornerRadiusPt: Number(e.target.value) })}
+            className="h-1.5 flex-1 cursor-pointer accent-brand disabled:cursor-not-allowed"
+            aria-label="Corner radius"
+          />
+          <div className="w-24"><NumberInput value={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} min={0} max={max} step={0.5} suffix="pt" disabled={!builtIn} /></div>
+        </div>
+        {!builtIn && <p className="mt-1 text-[11px] text-stone-500">Radius works with the built-in frame; an uploaded frame keeps its own shape.</p>}
+      </div>
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-xs font-medium text-stone-700">Corner color</span>
+          <button type="button" className={btnCls('ghost')} disabled={!s.cornerColor} onClick={() => set({ cornerColor: '' })}>{builtIn ? `Guide (${layout.corner.color})` : 'Original colors'}</button>
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="color" value={color} onChange={(e) => set({ cornerColor: e.target.value })} className="h-9 w-12 cursor-pointer rounded-lg border border-stone-200 bg-white p-1" aria-label="Corner color" />
+          <HexInput value={s.cornerColor || (builtIn ? layout.corner.color : '')} onChange={(v) => set({ cornerColor: v })} />
+          {[layout.corner.color, '#000000', '#d22026', '#ffffff'].map((c) => (
+            <button key={c} type="button" title={c} aria-label={`Corner color ${c}`} onClick={() => set({ cornerColor: c === layout.corner.color && builtIn ? '' : c })}
+              className={`h-6 w-6 rounded-full ring-1 ring-inset ring-stone-300 transition hover:scale-110 ${color.toLowerCase() === c ? 'outline-2 outline-offset-2 outline-brand' : ''}`}
+              style={{ background: c }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint: string }) {
   const a = useApp((s) => s.assets[kind])
@@ -95,6 +163,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
           </div>
         </div>
       )}
+      {kind === 'corner' && <CornerControls builtIn={!!a?.isDefault} />}
       <p className="mt-2.5 text-[11px] leading-snug text-stone-500">{hint}</p>
       {a?.warnings.map((w) => <div key={w.code} className="mt-1.5"><Notice>{w.message}</Notice></div>)}
     </div>

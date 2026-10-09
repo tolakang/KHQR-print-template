@@ -12,6 +12,8 @@ export const defaultSettings = (): Settings => ({
   midPosition: 'follow',
   showCorner: true,
   showLogo: true,
+  cornerRadiusPt: layout.corner.radius,
+  cornerColor: '',
   nameFontLatin: DEFAULT_NAME_FONT.latin,
   nameFontKhmer: DEFAULT_NAME_FONT.khmer,
   redrawRaster: true,

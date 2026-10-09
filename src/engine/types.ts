@@ -12,6 +12,9 @@ export interface Settings {
   midPosition: 'follow' | 'fixed'
   showCorner: boolean
   showLogo: boolean
+  /** Corner frame: outer corner radius (pt) and color ('' = the artwork's own colors). */
+  cornerRadiusPt: number
+  cornerColor: string
   /** Merchant-name font ids (see config/fonts.ts). */
   nameFontLatin: string
   nameFontKhmer: string

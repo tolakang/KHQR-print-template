@@ -90,7 +90,7 @@ export const useApp = create<AppState>()((set, get) => ({
         const url = saved?.url ?? BUILTIN_BY_NAME.get(saved?.name ?? '')
         const svg = url ? await fetchText(url) : saved?.svg ?? (await fetchText(DEFAULT_ASSETS[kind].file))
         const name = saved?.name ?? DEFAULT_ASSETS[kind].name
-        const warnings = await engine().setAsset(kind, svg)
+        const warnings = await engine().setAsset(kind, svg, !saved)
         set((st) => ({ assets: { ...st.assets, [kind]: { name, svg, isDefault: !saved, warnings } } }))
       }
       const sample = await QRCode.toString('KHQR SAMPLE - replace with your QR files', { type: 'svg', margin: 4, errorCorrectionLevel: 'M' })
@@ -137,7 +137,7 @@ export const useApp = create<AppState>()((set, get) => ({
   resetAsset: async (kind) => {
     await idbDel(`asset:${kind}`).catch(() => undefined)
     const svg = await fetchText(DEFAULT_ASSETS[kind].file)
-    const warnings = await engine().setAsset(kind, svg)
+    const warnings = await engine().setAsset(kind, svg, true)
     set((st) => ({ assets: { ...st.assets, [kind]: { name: DEFAULT_ASSETS[kind].name, svg, isDefault: true, warnings } } }))
   },
 

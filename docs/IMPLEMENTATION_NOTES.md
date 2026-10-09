@@ -128,6 +128,12 @@ non-QR images, all EC levels, and module-exact coverage.
   can be uploaded or dropped per script; it must contain the script's letters (A / ក), is kept
   in IndexedDB and re-registered on load. A missing font falls back to the guide font with a
   `font-missing` warning. The MID stays Nunito Sans Regular.
+- **Corner frame radius and color.** The built-in frame is now drawn from numbers
+  (`src/core/layout/corner.ts`, values in `layout.json → corner`: 2.7 pt stroke, 37.02 pt arms,
+  guide radius 20.6 pt, #939598) so the radius (0 = square, up to the arm length) and color can
+  change. Its corners are "smooth" like corner.svg (Bézier handles at 0.12 × radius); at the
+  guide radius it covers the same area as corner.svg within 5 % (`tests/corner.test.ts`).
+  An uploaded frame keeps its shape; the color setting repaints all its fills and strokes.
 - **Caching.** Default artwork moved from `public/assets/` to `public/artwork/`: `/assets/` is
   Vite's content-hashed output and is cached for a year as immutable, so a changed default
   SVG with the same name (the blank logo) stayed stale in browsers. `/artwork/`, `/fonts/` and
@@ -153,7 +159,7 @@ non-QR images, all EC levels, and module-exact coverage.
 
 | Check | Result |
 | --- | --- |
-| Unit tests (`npm test`) | 79 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background, hiding logo / corner frame |
+| Unit tests (`npm test`) | 83 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background, hiding logo / corner frame |
 | `pdffonts` / `pdfimages` on samples | 0 fonts, 0 images |
 | `pdfinfo -box` A6 + 3 mm bleed | Media 314.65 × 436.54, Trim 297.64 × 419.53 at 8.50 |
 | QR round trip (`npm run qa:qr`) | 160-char KHQR-style payload decodes with the logo on, EC L/M/Q, at 150 and 72 dpi |
