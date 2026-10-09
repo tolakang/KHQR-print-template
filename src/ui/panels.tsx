@@ -46,10 +46,22 @@ function HexInput({ value, onChange }: { value: string; onChange: (v: string) =>
 function CornerControls({ builtIn }: { builtIn: boolean }) {
   const s = useSettings((x) => x.s)
   const set = useSettings((x) => x.set)
+  const resetAsset = useApp((x) => x.resetAsset)
   const max = layout.corner.arm
   const color = s.cornerColor || (builtIn ? layout.corner.color : '#000000')
+  const isDefault = builtIn && s.cornerRadiusPt === layout.corner.radius && !s.cornerColor
+  const resetFrame = () => {
+    set({ cornerRadiusPt: layout.corner.radius, cornerColor: '' })
+    if (!builtIn) resetAsset('corner')
+  }
   return (
     <div className="mt-3 space-y-3 border-t border-stone-100 pt-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-stone-800">Frame style</span>
+        <button type="button" className={btnCls('secondary', 'sm')} disabled={isDefault} onClick={resetFrame} title="Built-in frame, guide radius and guide color">
+          <Reset className="h-3.5 w-3.5" />Reset to default
+        </button>
+      </div>
       <div className={builtIn ? '' : 'opacity-50'}>
         <div className="mb-1.5 flex items-center justify-between">
           <span className="text-xs font-medium text-stone-700">Corner radius</span>
@@ -60,14 +72,14 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
             type="range"
             min={0}
             max={max}
-            step={0.5}
+            step={0.25}
             value={Math.min(max, s.cornerRadiusPt)}
             disabled={!builtIn}
             onChange={(e) => set({ cornerRadiusPt: Number(e.target.value) })}
             className="h-1.5 flex-1 cursor-pointer accent-brand disabled:cursor-not-allowed"
             aria-label="Corner radius"
           />
-          <div className="w-24"><NumberInput value={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} min={0} max={max} step={0.5} suffix="pt" disabled={!builtIn} /></div>
+          <div className="w-24"><NumberInput value={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} min={0} max={max} step={0.25} suffix="pt" disabled={!builtIn} /></div>
         </div>
         {!builtIn && <p className="mt-1 text-[11px] text-stone-500">Radius works with the built-in frame; an uploaded frame keeps its own shape.</p>}
       </div>
@@ -311,8 +323,15 @@ export function TypographyPanel() {
   const s = useSettings((x) => x.s)
   const set = useSettings((x) => x.set)
   const d = defaultSettings()
+  const guide = { nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition, nameFontLatin: d.nameFontLatin, nameFontKhmer: d.nameFontKhmer }
+  const typographyIsGuide = (Object.keys(guide) as (keyof typeof guide)[]).every((k) => JSON.stringify(s[k]) === JSON.stringify(guide[k]))
+  const resetTypography = () => set(guide)
   return (
-    <Section title="Typography" icon={<TypeIcon className="h-4 w-4" />} defaultOpen={false}>
+    <Section title="Typography" icon={<TypeIcon className="h-4 w-4" />} defaultOpen={false} action={
+      <button type="button" className={btnCls('secondary', 'sm')} disabled={typographyIsGuide} onClick={resetTypography} title="Reset fonts, sizes and limits to the guide values">
+        <Reset className="h-3.5 w-3.5" />Reset
+      </button>
+    }>
       <FontPicker script="latin" />
       <FontPicker script="khmer" />
       <p className="text-[11px] leading-snug text-stone-500">English letters, digits and symbols use the English font; Khmer letters use the Khmer font. MID: Nunito Sans Regular. All text is outlined in the PDF.</p>
@@ -328,7 +347,7 @@ export function TypographyPanel() {
         <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
       </Field>
       <p className="text-[11px] leading-snug text-stone-500">The whole name is limited to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included); extra words are dropped and flagged. It wraps by whole word at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
-      <button type="button" className={`${btnCls('secondary')} w-full`} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition, nameFontLatin: d.nameFontLatin, nameFontKhmer: d.nameFontKhmer })}><Reset className="h-4 w-4" />Reset to guide values</button>
+      <button type="button" className={`${btnCls('secondary')} w-full`} disabled={typographyIsGuide} onClick={resetTypography}><Reset className="h-4 w-4" />Reset to guide values</button>
     </Section>
   )
 }

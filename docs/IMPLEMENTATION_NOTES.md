@@ -130,10 +130,16 @@ non-QR images, all EC levels, and module-exact coverage.
   `font-missing` warning. The MID stays Nunito Sans Regular.
 - **Corner frame radius and color.** The built-in frame is now drawn from numbers
   (`src/core/layout/corner.ts`, values in `layout.json → corner`: 2.7 pt stroke, 37.02 pt arms,
-  guide radius 20.6 pt, #939598) so the radius (0 = square, up to the arm length) and color can
-  change. Its corners are "smooth" like corner.svg (Bézier handles at 0.12 × radius); at the
-  guide radius it covers the same area as corner.svg within 5 % (`tests/corner.test.ts`).
+  guide radius 13.25 pt, #939598) so the radius (0 = square, up to the arm length) and color can
+  change. Corners are true quarter circles, so the number is the curve's radius; 13.25 pt is the
+  circle that best matches corner.svg's own (tighter "smooth") corner, within 1 %
+  (`tests/corner.test.ts`). A saved radius of 20.6 (the earlier smooth-corner guide) is migrated.
+  "Reset to default" restores the built-in frame, radius and color.
   An uploaded frame keeps its shape; the color setting repaints all its fills and strokes.
+- **Layout:** settings are separate cards (soft shadow, 28 px apart) on a #f0f0f0 canvas
+  (`--color-canvas`); the preview, its warnings and the rows table share that canvas with no
+  dividers. Header shows the KHQR wordmark (`public/artwork/khqr-logo.svg`, taken from a5.svg).
+  Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
 - **Caching.** Default artwork moved from `public/assets/` to `public/artwork/`: `/assets/` is
   Vite's content-hashed output and is cached for a year as immutable, so a changed default
   SVG with the same name (the blank logo) stayed stale in browsers. `/artwork/`, `/fonts/` and

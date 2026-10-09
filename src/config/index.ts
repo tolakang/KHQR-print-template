@@ -3,7 +3,7 @@ import limitsJson from './limits.json'
 
 export interface Layout {
   artboard: { w: number; h: number }
-  /** Frame square; stroke, arm length and outer radius in pt match corner.svg (scaled to `size`). */
+  /** Frame square; stroke, arm length and outer (circular) radius in pt match corner.svg (scaled to `size`). */
   corner: { size: number; x: number; y: number; stroke: number; arm: number; radius: number; color: string }
   qr: { size: number; x: number; y: number }
   logo: { size: number; x: number; y: number }

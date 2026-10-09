@@ -1,16 +1,16 @@
 /**
  * Corner frame drawn from numbers instead of the SVG, so its corner radius
- * and color can be changed. At the guide radius it matches corner.svg
+ * and color can be changed. At the guide radius (13.25 pt) it matches corner.svg
  * (four L-shaped brackets, 2.7 pt thick, 37 pt arms, in a 154.3 pt square).
  */
 import { layout as defaultLayout, type Layout } from '../../config'
 import type { Path } from '../geom/path'
 import type { RGB, Scene, SceneItem } from '../scene'
 
-// A "smooth" corner like corner.svg's: the curve starts `radius` from the corner
-// but hugs it more than a circular arc. Handles end T × radius from the corner (0.12 fits corner.svg best)
-// (a circle would use 1 − 0.5523 = 0.448).
-const T = 0.12
+// Corners are true quarter circles: the radius is the circle's radius in pt,
+// so the curve grows naturally with the number. Cubic Bézier handles end
+// T × radius from the corner (1 − 0.5523 for a circular arc).
+const T = 1 - 0.5523
 
 /** One bracket at the top-left, as a closed outline (outer edge, then inner edge). */
 function bracket(size: number, stroke: number, arm: number, radius: number): number[][] {

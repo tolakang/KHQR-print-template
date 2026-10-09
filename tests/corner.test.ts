@@ -34,7 +34,7 @@ describe('generated corner frame', () => {
     const ink = a.filter(Boolean).length
     const diff = a.filter((v, i) => v !== b[i]).length
     expect(ink).toBeGreaterThan(0)
-    expect(diff / ink).toBeLessThan(0.06)
+    expect(diff / ink).toBeLessThan(0.02)
   })
   it('fills the whole square edge to edge and keeps the arms at any radius', () => {
     for (const radius of [0, 8, layout.corner.radius, 30, 999]) {
