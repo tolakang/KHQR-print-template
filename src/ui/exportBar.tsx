@@ -100,8 +100,8 @@ export function ExportBar() {
           <button type="button" className={btnCls('secondary')} disabled={!ready} onClick={() => run('print')} title="Opens the browser print dialog" aria-label="Print…">
             <Printer className="h-4 w-4" /><span className="hidden sm:inline">Print…</span>
           </button>
-          <button type="button" className={btnCls('primary')} disabled={!ready} onClick={() => run('download')}>
-            <Download className="h-4 w-4" />Download<span className="hidden sm:inline"> PDF</span> <span className="hidden font-medium opacity-80 sm:inline">({label})</span>
+          <button type="button" className={btnCls('primary')} disabled={!ready} onClick={() => run('download')} aria-label={`Download PDF (${label})`}>
+            <Download className="h-4 w-4" /><span className="hidden min-[400px]:inline">Download</span><span className="hidden sm:inline"> PDF</span> <span className="hidden font-medium opacity-80 sm:inline">({label})</span>
           </button>
         </>
       )}

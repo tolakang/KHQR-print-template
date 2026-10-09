@@ -1,7 +1,7 @@
 /**
  * Flow view: the same panels as the card layout, arranged as nodes on a
- * pan-and-zoom canvas (React Flow). Inputs feed the Sticker node, which feeds
- * the Preview, the Export settings and the rows table. Node positions are kept
+ * pan-and-zoom canvas (React Flow). Assets, Data and Typography each wire into
+ * the Preview, which wires into Export; Data also feeds the rows table. Node positions are kept
  * per browser; the engine and the settings are shared with the card view.
  */
 import { useCallback, useRef, useState, type ReactNode } from 'react'
@@ -11,33 +11,51 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useUi } from '../store/ui'
-import { useApp } from '../store/app'
-import { useSettings } from '../store/settings'
 import { AssetsPanel, DataPanel, TypographyPanel, ExportPanel } from './panels'
-import { Preview, RowsTable, useRows } from './preview'
+import { Preview, RowsTable } from './preview'
 import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset } from './icons'
 import { btnCls } from './controls'
 
-type Kind = 'assets' | 'data' | 'typography' | 'sticker' | 'preview' | 'export' | 'rows'
+type Kind = 'assets' | 'data' | 'typography' | 'preview' | 'export' | 'rows'
 type FlowNodeData = { kind: Kind }
 
 const DEFAULT_LAYOUT: Record<Kind, { x: number; y: number }> = {
   assets: { x: 0, y: 0 },
   data: { x: 420, y: 0 },
   typography: { x: 420, y: 1080 },
-  sticker: { x: 860, y: 380 },
-  preview: { x: 1140, y: 0 },
-  export: { x: 1760, y: 0 },
-  rows: { x: 1140, y: 820 },
+  preview: { x: 900, y: 0 },
+  export: { x: 1540, y: 0 },
+  rows: { x: 900, y: 820 },
 }
 
-const IN: Record<Kind, boolean> = { assets: false, data: false, typography: false, sticker: true, preview: true, export: true, rows: true }
-const OUT: Record<Kind, boolean> = { assets: true, data: true, typography: true, sticker: true, preview: false, export: false, rows: false }
+/**
+ * Every wire has its own pair of connection points: `top` is the handle's
+ * vertical position on the node edge (CSS). Inputs sit on the left, outputs on the right.
+ */
+interface Port { id: string; top: string }
+const INPUTS: Partial<Record<Kind, Port[]>> = {
+  preview: [{ id: 'assets', top: '18%' }, { id: 'data', top: '30%' }, { id: 'typography', top: '42%' }],
+  export: [{ id: 'preview', top: '96px' }],
+  rows: [{ id: 'data', top: '50%' }],
+}
+const OUTPUTS: Partial<Record<Kind, Port[]>> = {
+  assets: [{ id: 'preview', top: '120px' }],
+  data: [{ id: 'preview', top: '120px' }, { id: 'rows', top: '220px' }],
+  typography: [{ id: 'preview', top: '56px' }],
+  preview: [{ id: 'export', top: '96px' }],
+}
 
 const EDGES: Edge[] = [
-  ['assets', 'sticker'], ['data', 'sticker'], ['typography', 'sticker'],
-  ['sticker', 'preview'], ['sticker', 'export'], ['data', 'rows'],
-].map(([source, target]) => ({ id: `${source}-${target}`, source, target, animated: true, style: { stroke: '#b1b1b7', strokeWidth: 1.5 } }))
+  ['assets', 'preview'], ['data', 'preview'], ['typography', 'preview'], ['preview', 'export'], ['data', 'rows'],
+].map(([source, target]) => ({
+  id: `${source}-${target}`,
+  source,
+  target,
+  sourceHandle: `out-${target}`,
+  targetHandle: `in-${source}`,
+  animated: true,
+  style: { stroke: '#b1b1b7', strokeWidth: 1.5 },
+}))
 
 const handleCls = '!h-3 !w-3 !border-2 !border-white !bg-brand shadow-sm'
 
@@ -53,26 +71,6 @@ function Grip({ icon, title, children }: { icon: ReactNode; title: string; child
   )
 }
 
-function StickerHub() {
-  const s = useSettings((x) => x.s)
-  const { rows } = useRows()
-  const hasSheet = useApp((x) => x.sheets.length > 0)
-  const size = s.pageSize === 'original' ? 'Original' : s.pageSize === 'custom' ? `${s.customMm.w}×${s.customMm.h} mm` : s.pageSize
-  return (
-    <div className="w-56 rounded-2xl border-2 border-brand bg-white p-4 shadow-[0_8px_24px_-6px_rgba(210,32,38,0.35)]">
-      <div className="flow-drag cursor-grab text-center active:cursor-grabbing">
-        <img src="/artwork/khqr-logo.svg" alt="" className="mx-auto h-5" />
-        <div className="mt-1.5 text-sm font-bold text-stone-900">Sticker</div>
-      </div>
-      <dl className="mt-3 space-y-1 text-xs">
-        <div className="flex justify-between"><dt className="text-stone-500">Rows</dt><dd className="font-semibold tabular-nums">{hasSheet ? rows.length : 'sample'}</dd></div>
-        <div className="flex justify-between"><dt className="text-stone-500">Page</dt><dd className="font-semibold">{size}{s.bleed ? ' + bleed' : ''}</dd></div>
-        <div className="flex justify-between"><dt className="text-stone-500">Background</dt><dd className="font-semibold">{s.background ? 'on' : 'off'}</dd></div>
-      </dl>
-    </div>
-  )
-}
-
 const card = 'rounded-2xl border border-black/[0.06] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.12)]'
 
 function FlowNode({ data }: NodeProps<Node<FlowNodeData>>) {
@@ -83,7 +81,6 @@ function FlowNode({ data }: NodeProps<Node<FlowNodeData>>) {
     case 'data': body = <div className="w-[360px]"><Grip icon={<TableIcon className="h-3.5 w-3.5" />} title="Data" /><DataPanel /></div>; break
     case 'typography': body = <div className="w-[360px]"><Grip icon={<TypeIcon className="h-3.5 w-3.5" />} title="Typography" /><TypographyPanel /></div>; break
     case 'export': body = <div className="w-[360px]"><Grip icon={<FileOut className="h-3.5 w-3.5" />} title="Export" /><ExportPanel /></div>; break
-    case 'sticker': body = <StickerHub />; break
     case 'preview':
       body = (
         <div className="w-[560px]">
@@ -103,9 +100,9 @@ function FlowNode({ data }: NodeProps<Node<FlowNodeData>>) {
   }
   return (
     <>
-      {IN[k] && <Handle type="target" position={Position.Left} className={handleCls} />}
+      {INPUTS[k]?.map((p) => <Handle key={p.id} id={`in-${p.id}`} type="target" position={Position.Left} style={{ top: p.top }} className={handleCls} />)}
       {body}
-      {OUT[k] && <Handle type="source" position={Position.Right} className={handleCls} />}
+      {OUTPUTS[k]?.map((p) => <Handle key={p.id} id={`out-${p.id}`} type="source" position={Position.Right} style={{ top: p.top }} className={handleCls} />)}
     </>
   )
 }
@@ -127,10 +124,12 @@ export function FlowView() {
   const [nodes, setNodes] = useState(() => makeNodes(useUi.getState().positions))
   const onNodesChange = useCallback((changes: NodeChange<Node<FlowNodeData>>[]) => setNodes((n) => applyNodeChanges(changes, n)), [])
   const flow = useRef<ReactFlowInstance<Node<FlowNodeData>> | null>(null)
+  // Phones open on the Preview node; the whole graph would be too small to use.
+  const [fitOptions] = useState(() => (window.matchMedia('(max-width: 767px)').matches ? { nodes: [{ id: 'preview' }], padding: 0.04 } : { padding: 0.08 }))
   const reset = () => {
     resetLayout()
     setNodes(makeNodes({}))
-    requestAnimationFrame(() => flow.current?.fitView({ padding: 0.08, duration: 300 }))
+    requestAnimationFrame(() => flow.current?.fitView({ ...fitOptions, duration: 300 }))
   }
 
   return (
@@ -143,7 +142,7 @@ export function FlowView() {
         onNodeDragStop={(_, node) => setPosition(node.id, node.position)}
         onInit={(i) => { flow.current = i }}
         fitView
-        fitViewOptions={{ padding: 0.08 }}
+        fitViewOptions={fitOptions}
         minZoom={0.2}
         maxZoom={1.5}
         nodesConnectable={false}
@@ -153,7 +152,7 @@ export function FlowView() {
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1.4} color="#c8c8c8" />
         <Controls showInteractive={false} position="bottom-left" className="!rounded-xl !border !border-stone-200 !shadow-md [&_button]:!border-stone-100" />
-        <MiniMap position="bottom-right" pannable zoomable className="!rounded-xl !border !border-stone-200 !shadow-md" nodeColor={(n) => (n.id === 'sticker' ? '#d22026' : '#ffffff')} nodeStrokeColor="#d4d4d4" maskColor="rgba(240,240,240,0.7)" />
+        <MiniMap position="bottom-right" pannable zoomable className="max-md:!hidden !rounded-xl !border !border-stone-200 !shadow-md" nodeColor={(n) => (n.id === 'preview' ? '#d22026' : '#ffffff')} nodeStrokeColor="#d4d4d4" maskColor="rgba(240,240,240,0.7)" />
       </ReactFlow>
       <button type="button" className={`${btnCls('secondary', 'sm')} absolute right-4 top-4 z-10 bg-white`} onClick={reset}>
         <Reset className="h-3.5 w-3.5" />Reset layout

@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect } from 'react'
 import { useUi } from './store/ui'
 import { FlowView } from './ui/flow'
 import { useApp } from './store/app'
@@ -7,20 +7,11 @@ import { Preview, RowsTable } from './ui/preview'
 import { ExportBar } from './ui/exportBar'
 import { Shield } from './ui/icons'
 
-const desktopQuery = '(min-width: 768px)'
-const subscribe = (cb: () => void) => {
-  const m = window.matchMedia(desktopQuery)
-  m.addEventListener('change', cb)
-  return () => m.removeEventListener('change', cb)
-}
-/** The flow view needs room; phones always get the card layout. */
-const useIsDesktop = () => useSyncExternalStore(subscribe, () => window.matchMedia(desktopQuery).matches)
-
 function ViewSwitch() {
   const view = useUi((x) => x.view)
   const setView = useUi((x) => x.setView)
   return (
-    <div className="hidden items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5 md:inline-flex" role="radiogroup" aria-label="Layout">
+    <div className="inline-flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5" role="radiogroup" aria-label="Layout">
       {(['cards', 'flow'] as const).map((v) => (
         <button
           key={v}
@@ -28,7 +19,7 @@ function ViewSwitch() {
           role="radio"
           aria-checked={view === v}
           onClick={() => setView(v)}
-          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${view === v ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
+          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition sm:px-3 ${view === v ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
         >
           {v === 'cards' ? 'Cards' : 'Flow'}
         </button>
@@ -41,7 +32,7 @@ export default function App() {
   const init = useApp((s) => s.init)
   const error = useApp((s) => s.error)
   const view = useUi((s) => s.view)
-  const flow = useIsDesktop() && view === 'flow'
+  const flow = view === 'flow'
   useEffect(() => {
     init()
   }, [init])
@@ -59,7 +50,7 @@ export default function App() {
             <Shield className="h-3.5 w-3.5" /> Runs in your browser · nothing is uploaded
           </span>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <ViewSwitch />
           <ExportBar />
         </div>
@@ -71,7 +62,7 @@ export default function App() {
         </div>
       )}
       {flow ? (
-        <div className="min-h-0 flex-1">
+        <div className="h-[calc(100dvh-57px)] md:h-auto md:min-h-0 md:flex-1">
           <FlowView />
         </div>
       ) : (

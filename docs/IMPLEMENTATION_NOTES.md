@@ -141,9 +141,10 @@ non-QR images, all EC levels, and module-exact coverage.
   dividers. Header shows the KHQR wordmark (`public/artwork/khqr-logo.svg`, taken from a5.svg).
   Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
 - **Flow view** (`src/ui/flow.tsx`, React Flow `@xyflow/react` 12): a Cards / Flow switch in
-  the header (desktop only; phones always use cards). The same Assets, Data, Typography and
-  Export panels, the Preview and the rows table become nodes on a dotted #f0f0f0 canvas, wired
-  into a central Sticker node (rows, page size, background). Nodes are dragged by their title
+  the header (desktop and phones; phones open zoomed to the Preview node, no minimap). The same
+  Assets, Data, Typography and Export panels, the Preview and the rows table become nodes on a
+  dotted #f0f0f0 canvas. Assets, Data and Typography each wire into the Preview, the Preview
+  into Export, and Data into the rows table; every wire has its own output and input point. Nodes are dragged by their title
   strip so every control inside stays usable; positions are kept in localStorage (`khqr-ui`),
   with a "Reset layout" button, zoom controls and a minimap. The engine and settings are shared,
   so switching views changes nothing in the output.
@@ -157,7 +158,8 @@ non-QR images, all EC levels, and module-exact coverage.
   the Excel and QR drop zones.
 - **Preview zoom.** The page fits the preview area and follows window resizes ("Fit"); − / +
   buttons, Ctrl/⌘ + scroll or a trackpad pinch zoom from 10 % to 800 % of actual size, and the
-  % button jumps to 100 % (actual size at 96 dpi).
+  % button jumps to 100 % (actual size at 96 dpi). A zoomed preview can be dragged with the
+  mouse to move around (touch keeps native scrolling).
 - **No hairline around the artboard.** Where the background is narrower than the page (side
   gaps at Original size, bleed), viewers showed a light seam between the edge bands and the
   background's clipped edge (the artwork's white base layer anti-aliases over the band). Sampled
