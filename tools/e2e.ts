@@ -141,7 +141,7 @@ await page.getByRole('button', { name: 'Show corner frame' }).click()
 
 // Drag and drop an SVG onto the corner frame card
 await page.evaluate(async () => {
-  const svg = await (await fetch('/assets/corner.svg')).text()
+  const svg = await (await fetch('/artwork/corner.svg')).text()
   const dt = new DataTransfer()
   dt.items.add(new File([svg], 'dropped-corner.svg', { type: 'image/svg+xml' }))
   const card = [...document.querySelectorAll('div')].find((d) => d.className.includes('rounded-xl') && d.textContent?.startsWith('Corner frame'))!

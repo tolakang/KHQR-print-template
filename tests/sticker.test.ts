@@ -19,9 +19,9 @@ beforeAll(async () => {
     khmer: readFileSync('public/fonts/Nokora-SemiBold.ttf'),
   })
   sf = { nameLatin: fonts.extraBold, nameKhmer: fonts.khmer, midLatin: fonts.regular }
-  logo = load('public/assets/bkb.svg')
-  corner = load('public/assets/corner.svg')
-  bg = load('public/assets/a5.svg')
+  logo = load('public/artwork/bkb.svg')
+  corner = load('public/artwork/corner.svg')
+  bg = load('public/artwork/a5.svg')
   qr = svgToScene(parseSvg(await QRCode.toString('TEST', { type: 'svg', margin: 4 }))).scene
 })
 

@@ -39,5 +39,5 @@ Health check: `GET /healthz` → `ok`. No database, volumes or secrets.
 - `src/core/` – text shaping/wrapping, SVG → scene, layout, PDF writer, raster QR, Excel
 - `src/engine/` + `src/workers/` – engine running in a Web Worker
 - `src/ui/`, `src/store/` – React dashboard
-- `public/assets` – default background (a5.svg), Bakong logos (bkb/bkc), corner frame
+- `public/artwork` – default background (a5.svg), Bakong logos (bkb black, bkc red, bkw blank), corner frame
 - `public/fonts` – Nunito Sans ExtraBold/Regular, Nokora SemiBold (SIL OFL)

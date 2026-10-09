@@ -15,7 +15,7 @@ const e = new Engine(
   async () => { throw new Error('no raster in perf test') },
 )
 for (const k of ['background', 'logo', 'corner'] as const) {
-  e.setAsset(k, readFileSync(`public/assets/${{ background: 'a5', logo: 'bkb', corner: 'corner' }[k]}.svg`, 'utf8'))
+  e.setAsset(k, readFileSync(`public/artwork/${{ background: 'a5', logo: 'bkb', corner: 'corner' }[k]}.svg`, 'utf8'))
 }
 const names = ['The Pizza Company Sihanou', 'ហាងកាហ្វេ សុខសាន្ត', 'ABC Mart ផ្សារទំនើប Phnom Penh', 'Lucky', 'Sovannaphum Trading and Import Export Company Limited']
 const rows: RowInput[] = []

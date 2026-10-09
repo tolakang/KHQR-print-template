@@ -13,8 +13,8 @@ const payload = '00020101021230510016abaakhppxxx@abaa01151240926202919060208ABA 
 const pages = []
 for (const ec of ['L', 'M', 'Q'] as const) {
   const qr = svgToScene(parseSvg(await QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: ec, margin: 4 }))).scene
-  const s = composeSticker({ name: 'The Pizza Company Sihanou', mid: '124092620291906', qr, logo: load('public/assets/bkb.svg'), corner: load('public/assets/corner.svg') }, { nameLatin: fonts.extraBold, nameKhmer: fonts.khmer, midLatin: fonts.regular }, defaultStickerOptions())
-  pages.push(buildPage(s.items, prepareBackground(load('public/assets/a5.svg')), { ...defaultExportOptions(), pageSize: 'A6' }))
+  const s = composeSticker({ name: 'The Pizza Company Sihanou', mid: '124092620291906', qr, logo: load('public/artwork/bkb.svg'), corner: load('public/artwork/corner.svg') }, { nameLatin: fonts.extraBold, nameKhmer: fonts.khmer, midLatin: fonts.regular }, defaultStickerOptions())
+  pages.push(buildPage(s.items, prepareBackground(load('public/artwork/a5.svg')), { ...defaultExportOptions(), pageSize: 'A6' }))
 }
 writeFileSync(process.argv[2], await writePdf(pages))
 console.log('payload', payload.length)

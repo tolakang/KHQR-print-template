@@ -16,9 +16,9 @@ const fonts = loadBundle({
 })
 const outliner = bundleOutliner(fonts)
 const load = (p: string) => svgToScene(parseSvg(readFileSync(p, 'utf8')), { outlineText: outliner })
-const bg = load('public/assets/a5.svg')
-const logo = load('public/assets/bkb.svg')
-const corner = load('public/assets/corner.svg')
+const bg = load('public/artwork/a5.svg')
+const logo = load('public/artwork/bkb.svg')
+const corner = load('public/artwork/corner.svg')
 console.log('bg warnings', bg.warnings)
 
 const rows = [

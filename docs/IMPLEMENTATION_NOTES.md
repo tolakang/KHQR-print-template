@@ -117,7 +117,7 @@ non-QR images, all EC levels, and module-exact coverage.
 
 ## UI refresh and fixes (after the first deploy)
 
-- **Blank Bakong logo** (`public/assets/bkw.svg`): the logo shape filled all white (a plain
+- **Blank Bakong logo** (`public/artwork/bkw.svg`): the logo shape filled all white (a plain
   white disc over the QR centre), made from `bkb.svg`. The logo card has a Black / Red / Blank
   color picker.
 - **Merchant-name fonts.** Typography has an English and a Khmer font picker (catalog in
@@ -128,6 +128,12 @@ non-QR images, all EC levels, and module-exact coverage.
   can be uploaded or dropped per script; it must contain the script's letters (A / ក), is kept
   in IndexedDB and re-registered on load. A missing font falls back to the guide font with a
   `font-missing` warning. The MID stays Nunito Sans Regular.
+- **Caching.** Default artwork moved from `public/assets/` to `public/artwork/`: `/assets/` is
+  Vite's content-hashed output and is cached for a year as immutable, so a changed default
+  SVG with the same name (the blank logo) stayed stale in browsers. `/artwork/`, `/fonts/` and
+  the page itself are now served with `Cache-Control: no-cache` (revalidated, 304 when
+  unchanged). Built-in logo choices are stored in IndexedDB by URL and fetched fresh on load;
+  entries saved by older versions (SVG text) are mapped back to the file by name.
 - **Drag and drop** onto each asset card and font card (`src/ui/useFileDrop.ts`), as well as
   the Excel and QR drop zones.
 - **Preview zoom.** The page fits the preview area and follows window resizes ("Fit"); − / +
