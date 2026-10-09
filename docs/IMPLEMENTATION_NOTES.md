@@ -93,6 +93,7 @@ non-QR images, all EC levels, and module-exact coverage.
 | QR round trip (`npm run qa:qr`) | 160-char KHQR-style payload decodes with the logo on, EC L/M/Q, at 150 and 72 dpi |
 | Browser e2e (`npm run e2e`, Chromium, production CSP) | Loads in ~1.5 s; Excel + 3 SVG + 2 PNG QRs → 5/6 rows matched (1 has no QR file); A6 + bleed + crop marks downloaded as one PDF and as a ZIP named by MID; no console errors |
 | Downloaded PDF | 0 fonts, 0 images, 5 pages, boxes correct; all 5 QRs decode at 150 dpi (2 were PNG uploads redrawn as vector) |
+| 1,000 stickers (`tools/perf.ts`, Node) | A6 + bleed: export 21.7 s, PDF 20.1 MB, 1,000 pages, 0 fonts, peak RSS ~1.2 GB |
 | Docker image build | Not run yet (no Docker daemon in the build sandbox); verify on Dokploy |
 
 ## Browser notes
