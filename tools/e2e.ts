@@ -115,6 +115,29 @@ if (!/_3p\.pdf$/.test(dlr.suggestedFilename())) throw new Error(`range export: e
 await dlr.saveAs(join(out, `range-${dlr.suggestedFilename()}`))
 await page.getByRole('button', { name: 'All', exact: true }).click()
 
+// Without background
+await page.getByText('Include background', { exact: true }).click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: join(out, '4b-no-background.png') })
+const [dlb] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.getByRole('button', { name: /^Download/ }).click()])
+console.log('downloaded (no background)', dlb.suggestedFilename())
+if (!/_no-bg_/.test(dlb.suggestedFilename())) throw new Error(`no-background export: unexpected name ${dlb.suggestedFilename()}`)
+await dlb.saveAs(join(out, dlb.suggestedFilename()))
+await page.getByText('Include background', { exact: true }).click()
+
+// Hide / show the logo and corner frame
+await page.getByRole('button', { name: 'Hide bakong logo' }).click()
+await page.getByRole('button', { name: 'Hide corner frame' }).click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: join(out, '4d-hidden-logo-corner.png') })
+await page.getByRole('button', { name: 'Show bakong logo' }).click()
+await page.getByRole('button', { name: 'Show corner frame' }).click()
+
+// Typography panel
+await page.getByRole('button', { name: /Typography/ }).click()
+await page.waitForTimeout(300)
+await page.screenshot({ path: join(out, '4c-typography.png') })
+
 // Print: builds the combined PDF and loads it into the hidden print frame
 await page.getByRole('button', { name: /^Print/ }).click()
 await page.waitForFunction(() => document.getElementById('print-frame')?.getAttribute('src')?.startsWith('blob:'), null, { timeout: 60000 })

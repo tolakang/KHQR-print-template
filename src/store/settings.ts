@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { layout, limits } from '../config'
+import { layout, limits, NAME_CHARS_MAX } from '../config'
 import type { Settings } from '../engine/types'
 
 export const defaultSettings = (): Settings => ({
@@ -10,7 +10,9 @@ export const defaultSettings = (): Settings => ({
   safeMarginPt: layout.safeMarginPt,
   midPosition: 'follow',
   showCorner: true,
+  showLogo: true,
   redrawRaster: true,
+  background: true,
   pageSize: 'original',
   customMm: { w: 105, h: 148 },
   bleed: false,
@@ -43,7 +45,9 @@ export const useSettings = create<SettingsState>()(
       merge: (persisted, current) => {
         const p: Partial<Settings> = (persisted as Partial<SettingsState>)?.s ?? {}
         const d = defaultSettings()
-        return { ...current, s: { ...d, ...p, limits: { ...d.limits, ...(p.limits ?? {}) } } }
+        const lim = { ...d.limits, ...(p.limits ?? {}) }
+        lim.nameChars = Math.min(NAME_CHARS_MAX, lim.nameChars)
+        return { ...current, s: { ...d, ...p, limits: lim } }
       },
     },
   ),

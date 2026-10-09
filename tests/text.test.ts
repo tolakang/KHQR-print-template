@@ -7,19 +7,23 @@ describe('wrapName', () => {
   it('keeps short names on one line', () => {
     expect(wrapName('ABC Coffee')).toMatchObject({ lines: ['ABC Coffee'], dropped: false })
   })
-  it('wraps by whole word at 25 chars', () => {
+  it('limits the whole name to 25 chars by whole word', () => {
     const r = wrapName('Golden Dragon Restaurant and Karaoke Lounge')
-    expect(r.lines).toEqual(['Golden Dragon Restaurant', 'and Karaoke Lounge'])
-    r.lines.forEach((l) => expect(charCount(l)).toBeLessThanOrEqual(25))
-  })
-  it('drops whole words past 2 lines and reports them', () => {
-    const r = wrapName('Sovannaphum Trading and Import Export Company Limited Phnom Penh')
-    expect(r.lines.length).toBe(2)
+    expect(r.lines).toEqual(['Golden Dragon Restaurant'])
     expect(r.dropped).toBe(true)
-    r.lines.forEach((l) => expect(charCount(l)).toBeLessThanOrEqual(25))
-    // no partial words
-    const words = 'Sovannaphum Trading and Import Export Company Limited Phnom Penh'.split(' ')
-    r.lines.join(' ').split(' ').forEach((w) => expect(words).toContain(w))
+    expect(r.droppedText).toBe('and Karaoke Lounge')
+  })
+  it('counts all lines together against the limit', () => {
+    const name = 'Sovannaphum Trading and Import Export Company Limited Phnom Penh'
+    const r = wrapName(name, 25, 2, (l) => charCount(l) <= 12)
+    expect(r.lines).toEqual(['Sovannaphum', 'Trading and'])
+    expect(charCount(r.lines.join(' '))).toBeLessThanOrEqual(25)
+    expect(r.droppedText).toBe('Import Export Company Limited Phnom Penh')
+  })
+  it('drops whole words past the line limit and reports them', () => {
+    const r = wrapName('AAAA BBBB CCCC DDDD EEEE', 25, 2, (l) => charCount(l) <= 8)
+    expect(r.lines).toEqual(['AAAA', 'BBBB'])
+    expect(r.droppedText).toBe('CCCC DDDD EEEE')
   })
   it('cuts a single over-long word on grapheme boundary', () => {
     const r = wrapName('Supercalifragilisticexpialidocious Shop')
@@ -41,10 +45,11 @@ describe('wrapName', () => {
   })
   it('wraps Khmer written without spaces at word boundaries', () => {
     const name = 'ហាងលក់ទំនិញចម្រុះសុខសាន្តនិងកាហ្វេភ្នំពេញថ្មី'
-    const r = wrapName(name, 10, 2)
+    const r = wrapName(name, 25, 2, (l) => charCount(l) <= 8)
     expect(r.lines.length).toBe(2)
     expect(r.lines.join('') + r.droppedText).toBe(name)
-    r.lines.forEach((l) => expect(charCount(l)).toBeLessThanOrEqual(10))
+    expect(charCount(r.lines.join(''))).toBeLessThanOrEqual(25)
+    r.lines.forEach((l) => expect(charCount(l)).toBeLessThanOrEqual(8))
   })
   it('handles mixed English and Khmer', () => {
     const r = wrapName('ABC Mart ហាងលក់ទំនិញ Phnom Penh')

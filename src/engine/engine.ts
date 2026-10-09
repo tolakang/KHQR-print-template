@@ -4,7 +4,7 @@
  * and exports.
  */
 import { zipSync } from 'fflate'
-import { layout, mmToPt } from '../config'
+import { layout, mmToPt, NAME_CHARS_MAX } from '../config'
 import { parseSvg, svgToScene } from '../core/svg/toScene'
 import { loadBundle, bundleOutliner, type FontBundle } from '../core/text/fonts'
 import { composeSticker, type StickerOptions, type StickerFonts } from '../core/layout/sticker'
@@ -117,7 +117,7 @@ export class Engine {
       nameSizePt: clamp(s.nameSizePt, 6, 60),
       midSizePt: clamp(s.midSizePt, 4, 30),
       limits: {
-        nameChars: Math.round(clamp(s.limits.nameChars, 1, 200)),
+        nameChars: Math.round(clamp(s.limits.nameChars, 1, NAME_CHARS_MAX)),
         nameLines: Math.round(clamp(s.limits.nameLines, 1, 4)),
         mid: Math.round(clamp(s.limits.mid, 1, 64)),
       },
@@ -154,7 +154,7 @@ export class Engine {
     if (row.midImprecise) warnings.push({ code: 'mid-precision', message: 'MID was stored as a number in Excel and may have lost digits. Format the MID column as Text.' })
     const qr = entry?.scene ?? null
     const st = composeSticker(
-      { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: this.assets.logo.scene, corner: this.assets.corner.scene },
+      { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: s.showLogo ? this.assets.logo.scene : null, corner: this.assets.corner.scene },
       this.stickerFonts,
       this.stickerOptions(s),
     )
@@ -165,7 +165,7 @@ export class Engine {
   preview(row: RowInput, s: Settings): PreviewResult {
     const { st, warnings } = this.compose(row, s)
     const opts = this.exportOptions(s)
-    const page = buildPage(st.items, this.bg, opts)
+    const page = buildPage(st.items, s.background ? this.bg : null, opts)
     const g = pageGeometry(opts)
     const sc = g.stickerScale
     const ox = g.trim.x + (g.trim.w - layout.artboard.w * sc) / 2
@@ -193,7 +193,7 @@ export class Engine {
     const files: ExportResult['files'] = []
     const stamp = new Date().toISOString().slice(0, 10)
     const size = s.pageSize === 'original' ? 'Original' : s.pageSize === 'custom' ? `${s.customMm.w}x${s.customMm.h}mm` : s.pageSize
-    const suffix = `${size}${s.bleed ? '_bleed' : ''}`
+    const suffix = `${size}${s.bleed ? '_bleed' : ''}${s.background ? '' : '_no-bg'}`
     const meta = { title: `KHQR Roll Sticker ${size}`, subject: 'KHQR Roll Sticker Single' }
 
     let builder: PdfBuilder | null = null
@@ -221,7 +221,7 @@ export class Engine {
         continue
       }
       if (warnings.length) warningsByRow.push({ row, warnings })
-      const page = buildPage(st.items, this.bg, opts)
+      const page = buildPage(st.items, s.background ? this.bg : null, opts)
       if (s.output === 'zip') {
         const b = await PdfBuilder.create({ ...meta, title: `KHQR ${row.mid}` })
         b.addPage(page)
