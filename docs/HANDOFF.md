@@ -103,7 +103,7 @@ what you see is what prints.
 | `src/engine/` | `engine.ts` (holds fonts/assets/QRs; preview; export), `client.ts` (main-thread RPC), `svgOut.ts`, `types.ts` |
 | `src/workers/engine.worker.ts` | Worker host; posts `hello` after HarfBuzz's top-level await finishes |
 | `src/store/` | Zustand: `settings.ts` (persisted to localStorage), `app.ts` (assets in IndexedDB, workbook, QR status) |
-| `src/ui/` | Panels, preview, rows table, export bar |
+| `src/ui/` | Panels, preview, rows table, export bar; `flow.tsx` = node (React Flow) view of the same panels |
 | `tools/` | QA scripts: sample, qr-roundtrip, qr-scan, svg-to-pdf, render-svg, diff-png, e2e, perf |
 | `tests/` | Vitest suites + the two Affinity templates as fixtures |
 

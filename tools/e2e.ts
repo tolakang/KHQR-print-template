@@ -91,6 +91,17 @@ await page.locator('tbody tr').nth(1).click()
 await page.waitForTimeout(600)
 await page.screenshot({ path: join(out, '3-khmer-row.png') })
 
+// Flow view: same panels as nodes on a canvas
+await page.getByRole('radio', { name: 'Flow' }).click()
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
+await page.waitForSelector('.react-flow__node .preview-page svg', { timeout: 15000 })
+await page.waitForTimeout(800)
+await page.screenshot({ path: join(out, '3b-flow.png') })
+if (await page.locator('.react-flow__edge').count() !== 6) throw new Error('flow edges missing')
+await page.getByRole('radio', { name: 'Cards' }).click()
+await page.waitForSelector('aside', { timeout: 5000 })
+console.log('flow view ok')
+
 // Export: A6 with bleed and crop marks
 await page.locator('select').filter({ hasText: 'Original' }).selectOption('A6')
 await page.getByRole('radio', { name: 'With bleed' }).click()

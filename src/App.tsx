@@ -1,13 +1,47 @@
-import { useEffect } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
+import { useUi } from './store/ui'
+import { FlowView } from './ui/flow'
 import { useApp } from './store/app'
 import { AssetsPanel, DataPanel, TypographyPanel, ExportPanel } from './ui/panels'
 import { Preview, RowsTable } from './ui/preview'
 import { ExportBar } from './ui/exportBar'
 import { Shield } from './ui/icons'
 
+const desktopQuery = '(min-width: 768px)'
+const subscribe = (cb: () => void) => {
+  const m = window.matchMedia(desktopQuery)
+  m.addEventListener('change', cb)
+  return () => m.removeEventListener('change', cb)
+}
+/** The flow view needs room; phones always get the card layout. */
+const useIsDesktop = () => useSyncExternalStore(subscribe, () => window.matchMedia(desktopQuery).matches)
+
+function ViewSwitch() {
+  const view = useUi((x) => x.view)
+  const setView = useUi((x) => x.setView)
+  return (
+    <div className="hidden items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5 md:inline-flex" role="radiogroup" aria-label="Layout">
+      {(['cards', 'flow'] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={view === v}
+          onClick={() => setView(v)}
+          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${view === v ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
+        >
+          {v === 'cards' ? 'Cards' : 'Flow'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function App() {
   const init = useApp((s) => s.init)
   const error = useApp((s) => s.error)
+  const view = useUi((s) => s.view)
+  const flow = useIsDesktop() && view === 'flow'
   useEffect(() => {
     init()
   }, [init])
@@ -25,7 +59,8 @@ export default function App() {
             <Shield className="h-3.5 w-3.5" /> Runs in your browser · nothing is uploaded
           </span>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <ViewSwitch />
           <ExportBar />
         </div>
       </header>
@@ -35,7 +70,12 @@ export default function App() {
           <button type="button" className="ml-auto font-semibold text-brand hover:underline" onClick={() => useApp.setState({ error: null })}>Dismiss</button>
         </div>
       )}
-      {/* Phones: preview first, then settings, then the rows table. Desktop: settings on the left. */}
+      {flow ? (
+        <div className="min-h-0 flex-1">
+          <FlowView />
+        </div>
+      ) : (
+      /* Phones: preview first, then settings, then the rows table. Desktop: settings on the left. */
       <div className="flex flex-col md:grid md:min-h-0 md:flex-1 md:grid-cols-[384px_minmax(0,1fr)] md:grid-rows-[minmax(0,3fr)_minmax(220px,1.3fr)]">
         <main className="order-1 h-[72vh] min-h-0 md:order-none md:col-start-2 md:row-start-1 md:h-auto">
           <Preview />
@@ -55,6 +95,7 @@ export default function App() {
           </div>
         </section>
       </div>
+      )}
     </div>
   )
 }

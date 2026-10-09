@@ -140,6 +140,13 @@ non-QR images, all EC levels, and module-exact coverage.
   (`--color-canvas`); the preview, its warnings and the rows table share that canvas with no
   dividers. Header shows the KHQR wordmark (`public/artwork/khqr-logo.svg`, taken from a5.svg).
   Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
+- **Flow view** (`src/ui/flow.tsx`, React Flow `@xyflow/react` 12): a Cards / Flow switch in
+  the header (desktop only; phones always use cards). The same Assets, Data, Typography and
+  Export panels, the Preview and the rows table become nodes on a dotted #f0f0f0 canvas, wired
+  into a central Sticker node (rows, page size, background). Nodes are dragged by their title
+  strip so every control inside stays usable; positions are kept in localStorage (`khqr-ui`),
+  with a "Reset layout" button, zoom controls and a minimap. The engine and settings are shared,
+  so switching views changes nothing in the output.
 - **Caching.** Default artwork moved from `public/assets/` to `public/artwork/`: `/assets/` is
   Vite's content-hashed output and is cached for a year as immutable, so a changed default
   SVG with the same name (the blank logo) stayed stale in browsers. `/artwork/`, `/fonts/` and
