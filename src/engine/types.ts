@@ -12,6 +12,8 @@ export interface Settings {
   midPosition: 'follow' | 'fixed'
   showCorner: boolean
   redrawRaster: boolean
+  /** Draw the background artwork (and its edge fill); off for pre-printed stock. */
+  background: boolean
   pageSize: PageSizeName
   customMm: { w: number; h: number }
   bleed: boolean

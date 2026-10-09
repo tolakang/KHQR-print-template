@@ -4,8 +4,11 @@
  *   consonant cluster with its subscripts/vowels counts as one.
  * - Breaks only between whole words (spaces, or ICU word boundaries for
  *   Khmer, which is usually written without spaces).
- * - A single word longer than the limit is cut on a grapheme boundary.
- * - Lines past `maxLines` are dropped by whole word and reported.
+ * - The whole name is limited to `maxChars` (25: the KHQR merchant-name
+ *   limit); whole words past it are dropped and reported. A first word longer
+ *   than the limit is cut on a grapheme boundary.
+ * - Lines break where the next word no longer fits the safe width; words past
+ *   `maxLines` are dropped and reported.
  */
 
 const graphemeSeg = new Intl.Segmenter('km', { granularity: 'grapheme' })
@@ -69,7 +72,7 @@ export function toUnits(text: string): Unit[] {
 
 export interface WrapResult {
   lines: string[]
-  /** True when words were dropped because they did not fit in maxLines. */
+  /** True when words were dropped (name over the character limit, or more lines than allowed). */
   dropped: boolean
   /** True when a single over-long word had to be cut mid-word. */
   wordCut: boolean
@@ -79,9 +82,14 @@ export interface WrapResult {
   tooWide: boolean
 }
 
+const joinUnits = (units: Unit[]) => units.map((u, k) => (k > 0 && u.spaceBefore ? ' ' : '') + u.text).join('')
+
 /**
- * @param fits optional width check (e.g. measured width <= safe width). A line
- *   breaks when it exceeds maxChars OR no longer fits.
+ * @param maxChars limit for the whole name (all lines, spaces between words
+ *   included). Whole words past it are dropped; a first word longer than the
+ *   limit is cut.
+ * @param fits optional width check (e.g. measured width <= safe width); a line
+ *   breaks before the word that no longer fits.
  */
 export function wrapName(
   raw: unknown,
@@ -89,71 +97,56 @@ export function wrapName(
   maxLines = 2,
   fits: (line: string) => boolean = () => true,
 ): WrapResult {
-  const text = normalizeName(raw)
-  const units = toUnits(text)
-  const lines: string[] = []
-  let cur = ''
-  let wordCut = false
-  let tooWide = false
-  let i = 0
-  const ok = (line: string) => charCount(line) <= maxChars && fits(line)
+  const units = toUnits(normalizeName(raw))
 
-  const push = () => {
-    if (cur) lines.push(cur)
-    cur = ''
+  // 1. Character limit for the whole name, by whole word.
+  const kept: Unit[] = []
+  let over: Unit[] = []
+  let total = 0
+  let wordCut = false
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i]
+    const add = (kept.length && u.spaceBefore ? 1 : 0) + charCount(u.text)
+    if (total + add <= maxChars) {
+      kept.push(u)
+      total += add
+      continue
+    }
+    if (!kept.length) {
+      // First word alone is over the limit: cut on a grapheme boundary.
+      const g = graphemes(u.text)
+      kept.push({ text: g.slice(0, maxChars).join(''), spaceBefore: false })
+      over = [{ text: g.slice(maxChars).join(''), spaceBefore: false }, ...units.slice(i + 1)]
+      wordCut = true
+    } else {
+      over = units.slice(i)
+    }
+    break
   }
 
-  for (; i < units.length; i++) {
-    if (lines.length >= maxLines) break
-    const u = units[i]
-    const sep = cur && u.spaceBefore ? ' ' : ''
-    const candidate = cur + sep + u.text
-    if (ok(candidate)) {
+  // 2. Lines by width, max `maxLines`.
+  const lines: string[] = []
+  let cur = ''
+  let tooWide = false
+  let i = 0
+  for (; i < kept.length; i++) {
+    const u = kept[i]
+    const candidate = cur ? cur + (u.spaceBefore ? ' ' : '') + u.text : u.text
+    if (!cur || fits(candidate)) {
+      if (!cur && !fits(u.text)) tooWide = true
       cur = candidate
       continue
     }
-    // Does not fit on the current line.
-    if (cur) {
-      push()
-      if (lines.length >= maxLines) break
-    }
-    if (charCount(u.text) <= maxChars) {
-      if (!fits(u.text)) tooWide = true
-      cur = u.text
-      continue
-    }
-    // Single word longer than a full line: cut on grapheme boundary.
-    wordCut = true
-    let g = graphemes(u.text)
-    while (g.length > maxChars && lines.length < maxLines) {
-      lines.push(g.slice(0, maxChars).join(''))
-      g = g.slice(maxChars)
-    }
-    if (lines.length >= maxLines) {
-      if (g.length) {
-        // Remainder of this word cannot fit.
-        units[i] = { text: g.join(''), spaceBefore: false }
-        break
-      }
-      i++
-      break
-    }
-    cur = g.join('')
+    lines.push(cur)
+    cur = ''
+    if (lines.length >= maxLines) break
+    if (!fits(u.text)) tooWide = true
+    cur = u.text
   }
-  if (lines.length < maxLines) push()
+  if (cur) lines.push(cur)
 
-  const rest = units.slice(i)
-  const droppedText = rest
-    .map((u, k) => (k > 0 && u.spaceBefore ? ' ' : '') + u.text)
-    .join('')
-  // `cur` may still hold text if we broke out with lines full.
-  return {
-    lines,
-    dropped: droppedText.length > 0,
-    wordCut,
-    droppedText,
-    tooWide,
-  }
+  const droppedText = joinUnits([...kept.slice(i), ...over])
+  return { lines, dropped: droppedText.length > 0, wordCut, droppedText, tooWide }
 }
 
 export interface MidResult {

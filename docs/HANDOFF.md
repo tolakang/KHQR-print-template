@@ -32,7 +32,7 @@ where the two differ, the notes win). The guide image is in
 | Docker image / Dokploy deploy | **Written, never built** (no Docker in the dev sandbox) |
 | Real data, real printer, banking-app scan | **Not done**: needs the business side |
 
-Test suite: 67 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
+Test suite: 73 unit tests (`npm test`), Playwright end-to-end (`npm run e2e`).
 
 ## 3. Run it
 
@@ -113,9 +113,10 @@ what you see is what prints.
    The guide's 98 / 107.6 pt measures are ~4 pt off its own 38 pt and 127.6 pt gaps.
    `layout.json` uses QR top 111.6, frame 101.45, logo 162.6. `tests/sticker.test.ts`
    pins this against `qr-en-template.svg`. Details in IMPLEMENTATION_NOTES.
-2. **Names wrap at 25 characters *or* the safe width** (artboard − 2 × 20 pt), whichever comes
-   first; never shrink automatically; extra words dropped and flagged. This reproduces the
-   guide's "The Pizza Company / Sihanou".
+2. **The whole name is at most 25 characters** (all lines together, spaces included; the
+   KHQR merchant-name limit; the setting cannot go higher). Extra whole words are dropped and
+   flagged ("Name trimmed" in the table). Lines break at the safe width (artboard − 2 × 20 pt),
+   max 2 lines; never shrink automatically. This reproduces the guide's "The Pizza Company / Sihanou".
 3. **MID follows the last name line** (KH template). "Fixed" is a setting.
 4. **Background is fitted inside the trim, never enlarged.** Gaps and bleed are filled with
    **edge bands** sampled from the artwork (vector point-in-path, refined to 0.02 pt), so the

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp, deriveRows } from '../store/app'
 import { useSettings } from '../store/settings'
+import { charCount, normalizeName } from '../core/text/wrap'
 import { engine } from '../engine/client'
 import type { PreviewResult, RowInput } from '../engine/types'
 import { btnCls } from './controls'
@@ -124,6 +125,7 @@ export function RowsTable() {
     if (!q) issues.push('No QR')
     else if (!q.ok) issues.push('QR unusable')
     if (!r.name.trim()) issues.push('No name')
+    else if (charCount(normalizeName(r.name)) > s.limits.nameChars) issues.push('Name trimmed')
     if (!r.mid.trim()) issues.push('No MID')
     if ([...r.mid].length > s.limits.mid) issues.push('MID trimmed')
     if (r.midImprecise) issues.push('MID precision')

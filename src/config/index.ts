@@ -18,6 +18,8 @@ export interface Limits { nameChars: number; nameLines: number; mid: number }
 
 export const layout = layoutJson as unknown as Layout
 export const limits = limitsJson as Limits
+/** KHQR merchant names are at most 25 characters; the setting cannot go higher. */
+export const NAME_CHARS_MAX = 25
 export const MM_TO_PT = 72 / 25.4
 export const mmToPt = (mm: number) => mm * MM_TO_PT
 

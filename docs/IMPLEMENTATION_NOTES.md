@@ -27,11 +27,13 @@ line-2 bottom and MID top/bottom all land within 1 pt.
 
 ## Text
 
-- **Wrapping is width-aware as well as character-aware.** The guide sample
-  "The Pizza Company Sihanou" is exactly 25 characters but wraps to two lines in the guide,
-  because at 23 pt it is wider than the artboard safe area. A line breaks when it exceeds
-  25 grapheme clusters **or** the safe width (artboard − 2 × 20 pt). Words past line 2 are
-  dropped and flagged; a single word wider than the safe width is flagged, never shrunk.
+- **25 characters for the whole name, lines by width.** (Changed after the first handoff:
+  it was 25 per line.) The name, all lines together with the spaces between words, is
+  limited to 25 grapheme clusters, the KHQR merchant-name limit; "Name chars (max)" can be
+  lowered but not raised above 25. Extra whole words are dropped and flagged; a first word
+  over the limit is cut. The kept words then wrap at the safe width (artboard − 2 × 20 pt),
+  max 2 lines: "The Pizza Company Sihanou" (exactly 25) wraps to two lines as in the guide.
+  A single word wider than the safe width is flagged, never shrunk.
 - **Khmer word breaks** use `Intl.Segmenter('km')`, so Khmer written without spaces wraps at
   dictionary word boundaries. Zero-width spaces are removed.
 - **MID follows the last name line** (moves up for one-line names). Confirmed by
@@ -85,6 +87,11 @@ non-QR images, all EC levels, and module-exact coverage.
 
 ## Added after the first handoff
 
+- **Export without background.** Export panel → "Include background" (on by default). Off
+  leaves out the background artwork and its edge/bleed fill; QR, logo, corner frame and text
+  stay in place, for printing on pre-printed sticker stock. Preview follows the setting; file
+  names get `_no-bg`. Still vector only (checked with pdffonts / pdfimages).
+
 - **Row range export.** Data panel → "Export rows": first / last **Excel row number**
   (inclusive; empty = first / last). Rows outside the range are dimmed in the table; the
   Download button shows "N of M stickers". The range is not persisted and resets when a
@@ -108,7 +115,7 @@ non-QR images, all EC levels, and module-exact coverage.
 
 | Check | Result |
 | --- | --- |
-| Unit tests (`npm test`) | 67 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size |
+| Unit tests (`npm test`) | 73 pass: config, wrap/Khmer, outlining, template conformance, page geometry, PDF has no `/Font` or `/Image`, Excel + row range, raster QR (incl. resolution rules, baked-in logo), printed QR size, export without background |
 | `pdffonts` / `pdfimages` on samples | 0 fonts, 0 images |
 | `pdfinfo -box` A6 + 3 mm bleed | Media 314.65 × 436.54, Trim 297.64 × 419.53 at 8.50 |
 | QR round trip (`npm run qa:qr`) | 160-char KHQR-style payload decodes with the logo on, EC L/M/Q, at 150 and 72 dpi |

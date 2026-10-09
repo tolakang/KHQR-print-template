@@ -5,7 +5,7 @@ import type { AssetKind } from '../engine/types'
 import { pageGeometry, type PageSizeName } from '../core/layout/page'
 import { qrPrintSize } from '../core/qr/printSize'
 import { rowsInRange } from '../core/excel/read'
-import { layout } from '../config'
+import { layout, NAME_CHARS_MAX } from '../config'
 import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
@@ -165,7 +165,7 @@ export function TypographyPanel() {
       <div className="grid grid-cols-2 gap-2">
         <Field label="Name size"><NumberInput value={s.nameSizePt} onChange={(v) => set({ nameSizePt: v })} min={6} max={60} step={0.5} suffix="pt" /></Field>
         <Field label="MID size"><NumberInput value={s.midSizePt} onChange={(v) => set({ midSizePt: v })} min={4} max={30} step={0.5} suffix="pt" /></Field>
-        <Field label="Name chars / line"><NumberInput value={s.limits.nameChars} onChange={(v) => set({ limits: { ...s.limits, nameChars: Math.round(v) } })} min={1} max={200} /></Field>
+        <Field label="Name chars (max)"><NumberInput value={s.limits.nameChars} onChange={(v) => set({ limits: { ...s.limits, nameChars: Math.round(v) } })} min={1} max={NAME_CHARS_MAX} /></Field>
         <Field label="Name lines (max)"><NumberInput value={s.limits.nameLines} onChange={(v) => set({ limits: { ...s.limits, nameLines: Math.round(v) } })} min={1} max={4} /></Field>
         <Field label="MID max chars"><NumberInput value={s.limits.mid} onChange={(v) => set({ limits: { ...s.limits, mid: Math.round(v) } })} min={1} max={64} /></Field>
         <Field label="Side safe margin"><NumberInput value={s.safeMarginPt} onChange={(v) => set({ safeMarginPt: v })} min={0} max={100} step={0.5} suffix="pt" /></Field>
@@ -173,8 +173,8 @@ export function TypographyPanel() {
       <Field label="MID position" group>
         <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
       </Field>
-      <p className="text-[11px] leading-snug text-stone-500">Names wrap by whole word at {s.limits.nameChars} characters or the safe width, max {s.limits.nameLines} lines; extra words are dropped and flagged. Text is never shrunk automatically.</p>
-      <button type="button" className={btnCls('ghost')} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition })}>Reset to guide values</button>
+      <p className="text-[11px] leading-snug text-stone-500">The whole name is limited to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included); extra words are dropped and flagged. It wraps by whole word at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
+      <button type="button" className={`${btnCls('secondary')} w-full`} onClick={() => set({ nameSizePt: d.nameSizePt, midSizePt: d.midSizePt, limits: d.limits, safeMarginPt: d.safeMarginPt, midPosition: d.midPosition })}>↺ Reset to guide values</button>
     </Section>
   )
 }
@@ -210,6 +210,12 @@ export function ExportPanel() {
       ) : (
         <p className="text-[11px] leading-snug text-stone-500">QR prints at {qrSize.qrMm.toFixed(1)} mm.</p>
       )}
+      <Toggle
+        checked={s.background}
+        onChange={(v) => set({ background: v })}
+        label="Include background"
+        hint="Off: only the QR, logo, corner frame and text are printed (for pre-printed sticker stock)."
+      />
       <Field label="Cut" group>
         <Segmented value={s.bleed ? 'bleed' : 'trim'} onChange={(v) => set({ bleed: v === 'bleed' })} options={[{ value: 'trim', label: 'No bleed (trimmed)' }, { value: 'bleed', label: 'With bleed' }]} />
       </Field>
