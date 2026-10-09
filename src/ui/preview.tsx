@@ -68,6 +68,10 @@ export function Preview() {
   const pad = view.w < 640 ? 32 : 64
   const fit = res && view.w > 0 ? Math.max(MIN_ZOOM, Math.min((view.w - pad) / res.width, (view.h - pad - 40) / res.height)) : ACTUAL
   const scale = zoom === 'fit' ? fit : zoom
+  // Drag to move around a preview that is larger than its area.
+  const canPan = !!res && (res.width * scale + pad > view.w + 1 || res.height * scale + pad + 40 > view.h + 1)
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null)
+  const [panning, setPanning] = useState(false)
   const zoomBy = (k: number) => setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale * k)))
   // Ctrl / Cmd + wheel (and trackpad pinch) zooms the preview instead of the page.
   const zoomRef = useRef(zoomBy)
@@ -117,7 +121,26 @@ export function Preview() {
         </div>
       </div>
       <div className="relative min-h-0 flex-1">
-      <div ref={viewRef} className="absolute inset-0 overflow-auto bg-canvas">
+      <div
+        ref={viewRef}
+        className={`nodrag nopan absolute inset-0 overflow-auto bg-canvas ${canPan ? (panning ? 'cursor-grabbing select-none' : 'cursor-grab') : ''}`}
+        onPointerDown={(e) => {
+          const el = viewRef.current
+          // Mouse / pen drag pans a zoomed preview; touch keeps native scrolling.
+          if (!el || !canPan || e.button !== 0 || e.pointerType === 'touch') return
+          pan.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop }
+          el.setPointerCapture(e.pointerId)
+          setPanning(true)
+        }}
+        onPointerMove={(e) => {
+          const el = viewRef.current
+          if (!el || !pan.current) return
+          el.scrollLeft = pan.current.left - (e.clientX - pan.current.x)
+          el.scrollTop = pan.current.top - (e.clientY - pan.current.y)
+        }}
+        onPointerUp={() => { pan.current = null; setPanning(false) }}
+        onPointerCancel={() => { pan.current = null; setPanning(false) }}
+      >
         <div className="flex px-4 pb-14 pt-4 sm:px-8 sm:pt-8" style={{ minWidth: '100%', minHeight: '100%', width: 'max-content' }}>
           {!ready && <div className="m-auto text-sm text-stone-500">Loading fonts and engine…</div>}
           {err && <div className="m-auto text-sm text-brand">{err}</div>}

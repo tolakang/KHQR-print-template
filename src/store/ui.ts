@@ -21,6 +21,11 @@ export const useUi = create<UiState>()(
       setPosition: (id, p) => set((st) => ({ positions: { ...st.positions, [id]: p } })),
       resetLayout: () => set({ positions: {} }),
     }),
-    { name: 'khqr-ui', version: 1 },
+    {
+      name: 'khqr-ui',
+      version: 2,
+      // v2 removed the Sticker node and moved the Preview: start from the new default layout.
+      migrate: (old) => ({ ...(old as UiState), positions: {} }),
+    },
   ),
 )

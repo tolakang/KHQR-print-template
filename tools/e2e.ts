@@ -93,11 +93,14 @@ await page.screenshot({ path: join(out, '3-khmer-row.png') })
 
 // Flow view: same panels as nodes on a canvas
 await page.getByRole('radio', { name: 'Flow' }).click()
-await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 6, null, { timeout: 15000 })
 await page.waitForSelector('.react-flow__node .preview-page svg', { timeout: 15000 })
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '3b-flow.png') })
-if (await page.locator('.react-flow__edge').count() !== 6) throw new Error('flow edges missing')
+if (await page.locator('.react-flow__edge').count() !== 5) throw new Error('flow edges missing')
+// Each wire has its own connection points: 5 wires → 5 outputs + 5 inputs.
+const handles = await page.locator('.react-flow__handle').count()
+if (handles !== 10) throw new Error(`expected 10 handles, got ${handles}`)
 await page.getByRole('radio', { name: 'Cards' }).click()
 await page.waitForSelector('aside', { timeout: 5000 })
 console.log('flow view ok')
@@ -187,10 +190,21 @@ const khmerFont = await page.getByLabel('Merchant name font: Khmer').inputValue(
 if (khmerFont !== 'nokora-600') throw new Error(`typography reset failed: ${khmerFont}`)
 console.log('typography reset ok')
 
-// Zoom
+// Zoom, then drag the zoomed preview to move around
+await page.getByRole('button', { name: 'Zoom in' }).click()
 await page.getByRole('button', { name: 'Zoom in' }).click()
 await page.getByRole('button', { name: 'Zoom in' }).click()
 await page.waitForTimeout(300)
+const view = page.locator('.preview-page').locator('xpath=../..')
+const before = await view.evaluate((el) => [el.scrollLeft, el.scrollTop])
+const box = (await view.boundingBox())!
+await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+await page.mouse.down()
+await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 150, { steps: 6 })
+await page.mouse.up()
+const after = await view.evaluate((el) => [el.scrollLeft, el.scrollTop])
+if (after[0] <= before[0] && after[1] <= before[1]) throw new Error(`preview drag did not pan: ${before} → ${after}`)
+console.log('preview pan ok')
 await page.screenshot({ path: join(out, '4f-zoomed.png') })
 await page.getByRole('button', { name: /Fit/ }).click()
 
@@ -205,10 +219,16 @@ const [dl2] = await Promise.all([page.waitForEvent('download', { timeout: 60000 
 await dl2.saveAs(join(out, dl2.suggestedFilename()))
 console.log('downloaded', dl2.suggestedFilename())
 
-// Mobile layout
+// Mobile layout (both views)
 await page.setViewportSize({ width: 390, height: 844 })
 await page.waitForTimeout(400)
 await page.screenshot({ path: join(out, '5-mobile.png') })
+await page.getByRole('radio', { name: 'Flow' }).click()
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 6, null, { timeout: 15000 })
+await page.waitForTimeout(600)
+await page.screenshot({ path: join(out, '5b-mobile-flow.png') })
+await page.getByRole('radio', { name: 'Cards' }).click()
+console.log('mobile flow ok')
 
 console.log('console errors/warnings:', logs.length ? logs : 'none')
 await browser.close()
