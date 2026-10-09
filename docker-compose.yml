@@ -1,0 +1,6 @@
+services:
+  khqr-sticker:
+    build: .
+    restart: unless-stopped
+    expose:
+      - "80"
