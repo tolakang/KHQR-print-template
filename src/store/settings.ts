@@ -18,7 +18,7 @@ export const defaultSettings = (): Settings => ({
   nameFontKhmer: DEFAULT_NAME_FONT.khmer,
   redrawRaster: true,
   background: true,
-  pageSize: 'original',
+  pageSize: 'A6',
   customMm: { w: 105, h: 148 },
   bleed: false,
   bleedMm: layout.bleedMm,
@@ -52,8 +52,12 @@ export const useSettings = create<SettingsState>()(
         const d = defaultSettings()
         const lim = { ...d.limits, ...(p.limits ?? {}) }
         lim.nameChars = Math.min(NAME_CHARS_MAX, lim.nameChars)
-        // 20.6 was the guide radius when corners were drawn as smooth curves; the circular guide is 13.25.
-        if (p.cornerRadiusPt === 20.6) p.cornerRadiusPt = d.cornerRadiusPt
+        // Values that were the defaults of the old 317.5 × 427.5 pt design move to the A6 design.
+        if (p.cornerRadiusPt === 20.6 || p.cornerRadiusPt === 13.25) p.cornerRadiusPt = d.cornerRadiusPt
+        if (p.nameSizePt === 23) p.nameSizePt = d.nameSizePt
+        if (p.midSizePt === 10) p.midSizePt = d.midSizePt
+        if (p.safeMarginPt === 20) p.safeMarginPt = d.safeMarginPt
+        if (p.pageSize === 'original') p.pageSize = 'A6'
         return { ...current, s: { ...d, ...p, limits: lim } }
       },
     },

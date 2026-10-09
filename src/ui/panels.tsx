@@ -72,7 +72,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
             type="range"
             min={0}
             max={max}
-            step={0.25}
+            step="any"
             value={Math.min(max, s.cornerRadiusPt)}
             disabled={!builtIn}
             onChange={(e) => set({ cornerRadiusPt: Number(e.target.value) })}
@@ -353,11 +353,10 @@ export function TypographyPanel() {
 }
 
 const PAGE_SIZES: { value: PageSizeName; label: string }[] = [
-  { value: 'original', label: `Original (${layout.artboard.w} × ${layout.artboard.h} pt)` },
   { value: 'A3', label: 'A3 (297 × 420 mm)' },
   { value: 'A4', label: 'A4 (210 × 297 mm)' },
   { value: 'A5', label: 'A5 (148 × 210 mm)' },
-  { value: 'A6', label: 'A6 (105 × 148 mm)' },
+  { value: 'A6', label: 'A6 (105 × 148 mm) · sticker size' },
   { value: 'A7', label: 'A7 (74 × 105 mm)' },
   { value: 'custom', label: 'Custom…' },
 ]

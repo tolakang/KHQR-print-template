@@ -115,6 +115,26 @@ non-QR images, all EC levels, and module-exact coverage.
   shows a notice and a per-sticker `qr-small` warning. Thresholds are a conservative guess:
   confirm with the print-and-scan test.
 
+## A6 design size
+
+**Vertical positions now follow the guide image** (owner's decision after comparing): frame
+98 and QR 107.6 from the top, name baseline 130 above the bottom, MID cap top 22 below the
+baseline (guide terms). The earlier layout followed the Affinity templates (101.45 / 111.6 /
+127.6 / 17), 2–4 pt off from the guide image. Verified by rendering: every guide line lands on
+the output within 0.1 pt (MID digits 21.9 below the baseline).
+
+The sticker is now designed at A6 exactly: 105 × 148 mm = 297.6378 × 419.5276 pt
+(1 pt = 25.4 / 72 mm; every page size is computed that way). The original guide was
+317.5 × 427.5 pt, wider than the A-proportioned background (a5.svg), which left ~7.1 pt (2.5 mm)
+side strips filled with edge bands at the old "Original" size. All guide numbers were scaled by
+419.5276 / 427.5 = 0.981351 with x re-centred: QR 131.5 pt, frame 151.42 pt, logo 31.4 pt, name
+22.57 pt, MID 9.81 pt, safe margin 12.66 pt, corner radius 13.0 pt. Text wraps exactly as before
+(sizes and safe width scale together). A6 is the default page size; "Original" is gone from the
+page list (it equals A6); saved old defaults (23 / 10 pt, margin 20, radius 13.25, Original) are
+migrated. Artwork within 0.5 % of the trim's shape fills it exactly (a5.svg is 1241 × 1749, 0.03 %
+off), so A3–A7 have no edge bands. Template-conformance tests map the template's measurements
+through the same factor.
+
 ## UI refresh and fixes (after the first deploy)
 
 - **Blank Bakong logo** (`public/artwork/bkw.svg`): the logo shape filled all white (a plain
@@ -142,9 +162,10 @@ non-QR images, all EC levels, and module-exact coverage.
   Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
 - **Flow view** (`src/ui/flow.tsx`, React Flow `@xyflow/react` 12): a Cards / Flow switch in
   the header (desktop and phones; phones open zoomed to the Preview node, no minimap). The same
-  Assets, Data, Typography and Export panels, the Preview and the rows table become nodes on a
-  dotted #f0f0f0 canvas. Assets, Data and Typography each wire into the Preview, the Preview
-  into Export, and Data into the rows table; every wire has its own output and input point. Nodes are dragged by their title
+  Assets, Data, Typography and Export panels, the Preview, a Download node and the rows table
+  become nodes on a dotted #f0f0f0 canvas. Assets, Data, Typography and Export (page size, bleed)
+  each wire into the Preview, the Preview into Download (Download PDF / Print, progress, result),
+  and Data into the rows table; every wire has its own output and input point. Nodes are dragged by their title
   strip so every control inside stays usable; positions are kept in localStorage (`khqr-ui`),
   with a "Reset layout" button, zoom controls and a minimap. The engine and settings are shared,
   so switching views changes nothing in the output.

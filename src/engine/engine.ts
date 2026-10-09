@@ -249,7 +249,7 @@ export class Engine {
     const warningsByRow: ExportResult['warningsByRow'] = []
     const files: ExportResult['files'] = []
     const stamp = new Date().toISOString().slice(0, 10)
-    const size = s.pageSize === 'original' ? 'Original' : s.pageSize === 'custom' ? `${s.customMm.w}x${s.customMm.h}mm` : s.pageSize
+    const size = s.pageSize === 'original' ? 'A6' : s.pageSize === 'custom' ? `${s.customMm.w}x${s.customMm.h}mm` : s.pageSize
     const suffix = `${size}${s.bleed ? '_bleed' : ''}${s.background ? '' : '_no-bg'}`
     const meta = { title: `KHQR Roll Sticker ${size}`, subject: 'KHQR Roll Sticker Single' }
 

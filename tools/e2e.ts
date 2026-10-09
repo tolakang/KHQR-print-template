@@ -93,20 +93,23 @@ await page.screenshot({ path: join(out, '3-khmer-row.png') })
 
 // Flow view: same panels as nodes on a canvas
 await page.getByRole('radio', { name: 'Flow' }).click()
-await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 6, null, { timeout: 15000 })
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
 await page.waitForSelector('.react-flow__node .preview-page svg', { timeout: 15000 })
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '3b-flow.png') })
-if (await page.locator('.react-flow__edge').count() !== 5) throw new Error('flow edges missing')
-// Each wire has its own connection points: 5 wires → 5 outputs + 5 inputs.
+if (await page.locator('.react-flow__edge').count() !== 6) throw new Error('flow edges missing')
+// Each wire has its own connection points: 6 wires → 6 outputs + 6 inputs.
 const handles = await page.locator('.react-flow__handle').count()
-if (handles !== 10) throw new Error(`expected 10 handles, got ${handles}`)
+if (handles !== 12) throw new Error(`expected 12 handles, got ${handles}`)
+// Download node builds the PDF too
+const [dlf] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.locator('.react-flow__node-panel').filter({ hasText: 'Builds the PDF' }).getByRole('button', { name: /^Download PDF/ }).click()])
+console.log('downloaded from flow node', dlf.suggestedFilename())
 await page.getByRole('radio', { name: 'Cards' }).click()
 await page.waitForSelector('aside', { timeout: 5000 })
 console.log('flow view ok')
 
 // Export: A6 with bleed and crop marks
-await page.locator('select').filter({ hasText: 'Original' }).selectOption('A6')
+await page.locator('select').filter({ hasText: 'A6 (105' }).selectOption('A6')
 await page.getByRole('radio', { name: 'With bleed' }).click()
 await page.getByText('Crop marks', { exact: true }).click()
 await page.waitForFunction(() => document.body.innerText.includes('338.65') && !document.body.innerText.includes('Updating…'), null, { timeout: 15000 })
@@ -161,7 +164,7 @@ const cornerHtml = await page.locator('.preview-page').innerHTML()
 if (!cornerHtml.includes('#d22026')) throw new Error('corner color not applied')
 await page.screenshot({ path: join(out, '4g-corner.png') })
 await page.getByRole('button', { name: 'Reset to default' }).click()
-if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.25') throw new Error('corner reset failed')
+if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.003') throw new Error('corner reset failed')
 console.log('corner controls ok')
 
 // Drag and drop an SVG onto the corner frame card
@@ -224,7 +227,7 @@ await page.setViewportSize({ width: 390, height: 844 })
 await page.waitForTimeout(400)
 await page.screenshot({ path: join(out, '5-mobile.png') })
 await page.getByRole('radio', { name: 'Flow' }).click()
-await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 6, null, { timeout: 15000 })
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
 await page.waitForTimeout(600)
 await page.screenshot({ path: join(out, '5b-mobile-flow.png') })
 await page.getByRole('radio', { name: 'Cards' }).click()

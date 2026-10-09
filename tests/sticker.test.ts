@@ -25,50 +25,56 @@ beforeAll(async () => {
   qr = svgToScene(parseSvg(await QRCode.toString('TEST', { type: 'svg', margin: 4 }))).scene
 })
 
+// The guide image is drawn at 317.5 × 427.5 pt; the A6 design is that design × K,
+// re-centred. Guide numbers below go through the same mapping.
+const K = (148 * 72) / 25.4 / 427.5
+const X = (x: number) => (x - 158.75) * K + (105 * 72) / 25.4 / 2
+const Y = (y: number) => y * K
+
 /** Index of items by role: compose then slice by known order. */
 function compose(name: string, mid = '124092620291906') {
   return composeSticker({ name, mid, qr, logo, corner }, sf, defaultStickerOptions())
 }
 
-describe('sticker matches the vector template (qr-en-template.svg)', () => {
-  // Reference values measured from the template in pt (see layout.json notes).
-  it('QR dark modules are exactly 134 × 134 at (91.75, 111.6)', () => {
+describe('sticker matches the guide image (KH guide, 317.5 × 427.5 pt terms)', () => {
+  it('QR dark modules are 134 × 134 at (91.75, 107.6)', () => {
     const r = compose('The Pizza Company Sihanou')
-    const qrItems = r.items.filter((_, k) => r.roles[k] === 'qr')
-    const b = inkBBox(qrItems, true)!
-    expect(b.x1).toBeCloseTo(91.75, 1)
-    expect(b.y1).toBeCloseTo(111.6, 1)
-    expect(b.x2 - b.x1).toBeCloseTo(134, 1)
-    expect(b.y2 - b.y1).toBeCloseTo(134, 1)
+    const b = inkBBox(r.items.filter((_, k) => r.roles[k] === 'qr'), true)!
+    expect(b.x1).toBeCloseTo(X(91.75), 1)
+    expect(b.y1).toBeCloseTo(Y(107.6), 1)
+    expect(b.x2 - b.x1).toBeCloseTo(134 * K, 1)
+    expect(b.y2 - b.y1).toBeCloseTo(134 * K, 1)
   })
-  it('text rows land within 1pt of the template', () => {
-    const r = compose('The Pizza Company Sihanou')
-    const text = r.items.filter((_, k) => r.roles[k] === 'name' || r.roles[k] === 'mid')
-    const [l1, l2, mid] = text.map((i) => inkBBox([i])!)
-    // Template: name ink top 282.65, name ink bottom (line 2) 327.84, MID 344.33–351.49
-    expect(Math.abs(l1.y1 - 282.65)).toBeLessThan(1)
-    expect(Math.abs(l2.y2 - 327.84)).toBeLessThan(1)
-    expect(Math.abs(mid.y1 - 344.33)).toBeLessThan(1)
-    expect(Math.abs(mid.y2 - 351.49)).toBeLessThan(1)
-    // Centered horizontally.
-    expect((l1.x1 + l1.x2) / 2).toBeCloseTo(158.75, 0)
-    expect((mid.x1 + mid.x2) / 2).toBeCloseTo(158.75, 0)
+  it('frame is 154.3 square, 81.6 from the sides and 98 from the top', () => {
+    const b = inkBBox([compose('X').items[0]])!
+    expect(b.x1).toBeCloseTo(X(81.6), 1)
+    expect(b.y1).toBeCloseTo(Y(98), 1)
+    expect(b.x2 - b.x1).toBeCloseTo(154.3 * K, 1)
   })
-  it('logo is 32 × 32 centered on the QR', () => {
+  it('logo is 32 × 32 centred on the QR', () => {
     const r = compose('X')
-    // logo items are the 6 items after corner (1) + QR items; find white ring by size
-    const ring = r.items.find((i) => i.kind === 'fill' && i.color[0] > 0.99 && Math.abs((inkBBox([i])!.x2 - inkBBox([i])!.x1) - 32) < 0.5)
+    const ring = r.items.find((i) => i.kind === 'fill' && i.color[0] > 0.99 && Math.abs((inkBBox([i])!.x2 - inkBBox([i])!.x1) - 32 * K) < 0.5)
     expect(ring).toBeTruthy()
     const b = inkBBox([ring!])!
-    expect(b.x1).toBeCloseTo(142.75, 1)
-    expect(b.y1).toBeCloseTo(162.6, 1)
+    expect(b.x1).toBeCloseTo(X(142.75), 1)
+    expect(b.y1).toBeCloseTo(Y(107.6 + 67 - 16), 1)
   })
-  it('corner frame is 154.3 square at x 81.6', () => {
-    const r = compose('X')
-    const b = inkBBox([r.items[0]])!
-    expect(b.x1).toBeCloseTo(81.6, 1)
-    expect(b.x2 - b.x1).toBeCloseTo(154.3, 1)
-    expect(b.y2 - b.y1).toBeCloseTo(154.3, 1)
+  it('name baseline is 130 above the bottom; MID cap top 22 below it; both centred', () => {
+    // "HELLO" has a flat baseline; MID digits are cap height.
+    const r = compose('HELLO')
+    const name = inkBBox(r.items.filter((_, k) => r.roles[k] === 'name'))!
+    const mid = inkBBox(r.items.filter((_, k) => r.roles[k] === 'mid'))!
+    const H = (148 * 72) / 25.4
+    expect(H - name.y2).toBeCloseTo(130 * K, 0)
+    expect(mid.y1 - name.y2).toBeCloseTo(22 * K, 0)
+    expect((name.x1 + name.x2) / 2).toBeCloseTo(X(158.75), 0)
+    expect((mid.x1 + mid.x2) / 2).toBeCloseTo(X(158.75), 0)
+  })
+  it('a Khmer name sits on the same baseline', () => {
+    const r = compose('អានីតា មួបខ្មែរ', '125090512311628')
+    const name = inkBBox(r.items.filter((_, k) => r.roles[k] === 'name'))!
+    expect(name.y1).toBeLessThan(Y(297.5)) // letters above the baseline …
+    expect(name.y2).toBeGreaterThan(Y(297.5)) // … subscripts below it
   })
   it('MID moves up under a one-line name', () => {
     const one = inkBBox([compose('Lucky').items.at(-1)!])!
@@ -96,8 +102,14 @@ describe('export geometry', () => {
     expect(g.trim.y).toBe(0)
     expect(g.media.h - g.trim.h).toBeCloseTo(28.35, 1) // 10mm max
   })
-  it('scales uniformly (A6 ≈ 93.75%)', () => {
-    expect(pageGeometry({ ...defaultExportOptions(), pageSize: 'A6' }).stickerScale).toBeCloseTo(0.9375, 3)
+  it('A6 is the design size (scale 1); other A sizes scale uniformly', () => {
+    expect(pageGeometry({ ...defaultExportOptions(), pageSize: 'A6' }).stickerScale).toBeCloseTo(1, 4)
+    expect(pageGeometry({ ...defaultExportOptions(), pageSize: 'A5' }).stickerScale).toBeCloseTo(148 / 105, 4) // A5 width ÷ A6 width
+  })
+  it('the A-proportioned background fills A6 exactly: no edge bands', () => {
+    const page = buildPage([], prepareBackground(bg), { ...defaultExportOptions(), pageSize: 'A6' })
+    const fills = page.items.filter((i) => i.kind === 'fill')
+    expect(fills).toEqual([])
   })
 })
 
