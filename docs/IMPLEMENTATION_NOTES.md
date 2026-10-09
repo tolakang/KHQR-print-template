@@ -117,6 +117,12 @@ non-QR images, all EC levels, and module-exact coverage.
 
 ## A6 design size
 
+**Vertical positions now follow the guide image** (owner's decision after comparing): frame
+98 and QR 107.6 from the top, name baseline 130 above the bottom, MID cap top 22 below the
+baseline (guide terms). The earlier layout followed the Affinity templates (101.45 / 111.6 /
+127.6 / 17), 2–4 pt off from the guide image. Verified by rendering: every guide line lands on
+the output within 0.1 pt (MID digits 21.9 below the baseline).
+
 The sticker is now designed at A6 exactly: 105 × 148 mm = 297.6378 × 419.5276 pt
 (1 pt = 25.4 / 72 mm; every page size is computed that way). The original guide was
 317.5 × 427.5 pt, wider than the A-proportioned background (a5.svg), which left ~7.1 pt (2.5 mm)

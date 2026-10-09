@@ -113,12 +113,13 @@ what you see is what prints.
    317.5 × 427.5 pt, but the background artwork is A-proportioned, so it left ~7 pt side strips.
    Every guide number in `layout.json` was scaled by 419.528 / 427.5 = 0.981351 (x re-centred), so
    QR (now 131.5 pt), frame, logo and text keep their place on the artwork, and the background fills
-   the page exactly. The numbers below are the original guide values; `layout.json → _notes` lists
-   both. Page sizes are exact (mm × 72 / 25.4).
-1. **Vertical positions follow the vector templates, not the guide image's top numbers.**
-   The guide's 98 / 107.6 pt measures are ~4 pt off its own 38 pt and 127.6 pt gaps.
-   `layout.json` uses QR top 111.6, frame 101.45, logo 162.6. `tests/sticker.test.ts`
-   pins this against `qr-en-template.svg`. Details in IMPLEMENTATION_NOTES.
+   the page exactly, edge to edge. The numbers below are guide values; `layout.json → _notes` lists
+   them. Page sizes are exact (mm × 72 / 25.4).
+1. **Positions follow the guide image (KH guide)**, not the Affinity vector templates: frame 98 and
+   QR 107.6 from the top, name baseline 130 above the bottom, MID cap top 22 below the baseline
+   (in 317.5 × 427.5 pt guide terms, then × 0.981351 for A6). The templates had frame 101.45,
+   QR 111.6, baseline 127.6 and MID 17; the owner chose the guide. The guide's frame is 0.55 pt
+   below concentric with the QR; kept as drawn. `tests/sticker.test.ts` pins these values.
 2. **The whole name is at most 25 characters** (all lines together, spaces included; the
    KHQR merchant-name limit; the setting cannot go higher). Extra whole words are dropped and
    flagged ("Name trimmed" in the table). Lines break at the safe width (artboard − 2 × 20 pt),

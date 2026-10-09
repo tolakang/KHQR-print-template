@@ -11,11 +11,15 @@ describe('layout guide numbers (A6 design)', () => {
     expect(layout.artboard.h).toBeCloseTo(148 * PT, 3)
     expect(layout.designScale?.factor).toBeCloseTo(K, 5)
   })
-  it('every element is the original guide value × 0.981351, re-centred', () => {
+  it('every element is the guide-image value × 0.981351, re-centred', () => {
     const X = (x: number) => (x - 158.75) * K + CX
     expect(layout.qr.size).toBeCloseTo(134 * K, 2)
     expect(layout.qr.x).toBeCloseTo(X(91.75), 2)
-    expect(layout.qr.y).toBeCloseTo(111.6 * K, 2)
+    expect(layout.qr.y).toBeCloseTo(107.6 * K, 2) // guide: 107.6 from the top
+    expect(layout.corner.y).toBeCloseTo(98 * K, 2) // guide: 98 from the top
+    expect(layout.corner.x).toBeCloseTo(X(81.6), 2) // guide: 81.6 from the sides
+    expect(layout.artboard.h - layout.name.baselineY).toBeCloseTo(130 * K, 2) // guide: 130 to the bottom
+    expect(layout.mid.gapFromName).toBeCloseTo(22 * K, 2) // guide: 22 baseline → MID
     expect(layout.corner.size).toBeCloseTo(154.3 * K, 2)
     expect(layout.logo.size).toBeCloseTo(32 * K, 2)
     expect(layout.name.sizePt).toBeCloseTo(23 * K, 2)
@@ -30,16 +34,11 @@ describe('layout guide numbers (A6 design)', () => {
     expect(layout.logo.x + layout.logo.size / 2).toBeCloseTo(layout.qr.x + h, 1)
     expect(layout.logo.y + layout.logo.size / 2).toBeCloseTo(layout.qr.y + h, 1)
   })
-  it('corner, QR and logo are concentric', () => {
+  it('logo is concentric with the QR; the frame is 0.55 pt lower (guide 98 vs concentric 97.45)', () => {
     const cy = (b: { y: number; size: number }) => b.y + b.size / 2
-    expect(cy(layout.corner)).toBeCloseTo(cy(layout.qr), 1)
     expect(cy(layout.logo)).toBeCloseTo(cy(layout.qr), 1)
+    expect(cy(layout.corner) - cy(layout.qr)).toBeCloseTo(0.55 * K, 2)
     expect(layout.corner.x + layout.corner.size / 2).toBeCloseTo(CX, 1)
-  })
-  it('guide gaps scale too: 38 pt QR-to-cap and 127.6 pt baseline-to-bottom', () => {
-    const capH = 16.3 * K // Nunito Sans ExtraBold cap height at the name size
-    expect(layout.name.baselineY - capH - (layout.qr.y + layout.qr.size)).toBeCloseTo(38 * K, 0)
-    expect(layout.artboard.h - layout.name.baselineY).toBeCloseTo(127.6 * K, 1)
   })
   it('limits', () => {
     expect(limits).toEqual({ nameChars: 25, nameLines: 2, mid: 15 })
