@@ -17,6 +17,7 @@ import { qrPrintSize } from '../core/qr/printSize'
 import { parseColor } from '../core/svg/color'
 import type { Scene, Warning } from '../core/scene'
 import { pageToSvg } from './svgOut'
+import { cornerFrameScene, recolorScene } from '../core/layout/corner'
 import { inkBBox } from '../core/layout/place'
 import type { AssetKind, ExportResult, PreviewResult, QrFileStatus, RowInput, Settings } from './types'
 
@@ -30,10 +31,10 @@ interface QrEntry { status: QrFileStatus; scene?: Scene; bytes: Uint8Array; mime
 
 export class Engine {
   private fonts: FontBundle
-  private assets: Record<AssetKind, { scene: Scene | null; warnings: Warning[] }> = {
-    background: { scene: null, warnings: [] },
-    logo: { scene: null, warnings: [] },
-    corner: { scene: null, warnings: [] },
+  private assets: Record<AssetKind, { scene: Scene | null; warnings: Warning[]; isDefault: boolean }> = {
+    background: { scene: null, warnings: [], isDefault: false },
+    logo: { scene: null, warnings: [], isDefault: false },
+    corner: { scene: null, warnings: [], isDefault: false },
   }
   private bg: PreparedBackground | null = null
   private qrs = new Map<string, QrEntry>()
@@ -84,10 +85,14 @@ export class Engine {
     return { nameLatin: pick('latin', s.nameFontLatin), nameKhmer: pick('khmer', s.nameFontKhmer), midLatin: this.fonts.regular }
   }
 
-  /** Set an asset from SVG text (null clears it). Returns warnings. */
-  setAsset(kind: AssetKind, svg: string | null): Warning[] {
+  /**
+   * Set an asset from SVG text (null clears it). Returns warnings. `isDefault`
+   * marks the bundled corner frame, which is then drawn from numbers so its
+   * radius can change.
+   */
+  setAsset(kind: AssetKind, svg: string | null, isDefault = false): Warning[] {
     if (svg === null) {
-      this.assets[kind] = { scene: null, warnings: [] }
+      this.assets[kind] = { scene: null, warnings: [], isDefault: false }
       if (kind === 'background') this.bg = null
       return []
     }
@@ -99,7 +104,7 @@ export class Engine {
       const b = inkBBox([it])
       return !(b && b.x2 - b.x1 > scene.width * 0.95 && b.y2 - b.y1 > scene.height * 0.95)
     })
-    this.assets[kind] = { scene, warnings }
+    this.assets[kind] = { scene, warnings, isDefault }
     if (kind === 'background') this.bg = prepareBackground(scene)
     return warnings
   }
@@ -180,6 +185,17 @@ export class Engine {
     }
   }
 
+  /** The bundled frame is generated (radius + color); an uploaded one is only recolored. */
+  private cornerScene(s: Settings): Scene | null {
+    const a = this.assets.corner
+    if (!a.scene) return null
+    const color = parseColor(s.cornerColor)?.rgb
+    if (a.isDefault) {
+      return cornerFrameScene({ radius: clamp(s.cornerRadiusPt, 0, layout.corner.arm), color: color ?? parseColor(layout.corner.color)!.rgb })
+    }
+    return color ? recolorScene(a.scene, color) : a.scene
+  }
+
   private compose(row: RowInput, s: Settings) {
     const entry = row.qrFile ? this.qrs.get(row.qrFile) : undefined
     const warnings: Warning[] = []
@@ -194,7 +210,7 @@ export class Engine {
     if (row.midImprecise) warnings.push({ code: 'mid-precision', message: 'MID was stored as a number in Excel and may have lost digits. Format the MID column as Text.' })
     const qr = entry?.scene ?? null
     const st = composeSticker(
-      { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: s.showLogo ? this.assets.logo.scene : null, corner: this.assets.corner.scene },
+      { name: row.name, mid: row.mid, qr: qr ?? { width: 1, height: 1, items: [] }, logo: s.showLogo ? this.assets.logo.scene : null, corner: this.cornerScene(s) },
       this.stickerFonts(s, warnings),
       this.stickerOptions(s),
     )

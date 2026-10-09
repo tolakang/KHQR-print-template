@@ -139,9 +139,20 @@ await page.screenshot({ path: join(out, '4e-white-logo.png') })
 await page.getByRole('button', { name: 'Black', exact: true }).click()
 await page.getByRole('button', { name: 'Show corner frame' }).click()
 
+// Corner frame: square corners in brand red
+await page.getByLabel('Corner radius', { exact: true }).fill('0')
+await page.getByRole('button', { name: 'Corner color #d22026' }).click()
+await page.waitForTimeout(800)
+const cornerHtml = await page.locator('.preview-page').innerHTML()
+if (!cornerHtml.includes('#d22026')) throw new Error('corner color not applied')
+await page.screenshot({ path: join(out, '4g-corner.png') })
+await page.getByRole('button', { name: /^Guide \(20.6 pt\)/ }).click()
+await page.getByRole('button', { name: /^Guide \(#939598\)/ }).click()
+console.log('corner controls ok')
+
 // Drag and drop an SVG onto the corner frame card
 await page.evaluate(async () => {
-  const svg = await (await fetch('/assets/corner.svg')).text()
+  const svg = await (await fetch('/artwork/corner.svg')).text()
   const dt = new DataTransfer()
   dt.items.add(new File([svg], 'dropped-corner.svg', { type: 'image/svg+xml' }))
   const card = [...document.querySelectorAll('div')].find((d) => d.className.includes('rounded-xl') && d.textContent?.startsWith('Corner frame'))!

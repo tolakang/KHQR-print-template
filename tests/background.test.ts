@@ -17,7 +17,7 @@ describe('showing and hiding assets', () => {
       },
       async () => { throw new Error('no raster') },
     )
-    for (const [k, f] of [['background', 'a5'], ['logo', 'bkb'], ['corner', 'corner']] as const) e.setAsset(k, readFileSync(`public/assets/${f}.svg`, 'utf8'))
+    for (const [k, f] of [['background', 'a5'], ['logo', 'bkb'], ['corner', 'corner']] as const) e.setAsset(k, readFileSync(`public/artwork/${f}.svg`, 'utf8'))
     await e.addQrFile('qr.svg', new TextEncoder().encode(await QRCode.toString('KHQR TEST', { type: 'svg', margin: 4 })), 'image/svg+xml', true)
   })
 
@@ -45,11 +45,11 @@ describe('showing and hiding assets', () => {
   })
   it('draws the blank logo all white over the QR centre', () => {
     const black = e.preview(row, defaultSettings()).svg
-    e.setAsset('logo', readFileSync('public/assets/bkw.svg', 'utf8'))
+    e.setAsset('logo', readFileSync('public/artwork/bkw.svg', 'utf8'))
     expect(e.assetWarnings('logo')).toEqual([])
     const blank = e.preview(row, defaultSettings()).svg
     const none = e.preview(row, { ...defaultSettings(), showLogo: false }).svg
-    e.setAsset('logo', readFileSync('public/assets/bkb.svg', 'utf8'))
+    e.setAsset('logo', readFileSync('public/artwork/bkb.svg', 'utf8'))
     expect(black).toContain('fill="#231f20"')
     expect(blank).not.toContain('fill="#231f20"')
     expect(blank).not.toBe(none)
