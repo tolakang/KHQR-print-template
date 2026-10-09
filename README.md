@@ -30,7 +30,7 @@ Health check: `GET /healthz` → `ok`. No database, volumes or secrets.
 
 ## Docs
 - **[Project handoff](docs/HANDOFF.md)** (start here)
-- [Development & verification plan](docs/DEVELOPMENT_PLAN.md)
+- [Development & verification plan](docs/DEVELOPMENT_PLAN.md) · [PDF](<docs/KHQR Roll Sticker PDF Generator - Development & Verification Plan.pdf>)
 - [Implementation notes, decisions and verification results](docs/IMPLEMENTATION_NOTES.md)
 - Guide: [docs/reference/guide-roll-sticker-khqr-single.png](docs/reference/guide-roll-sticker-khqr-single.png)
 

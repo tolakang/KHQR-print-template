@@ -9,7 +9,8 @@ A static web app that turns **finished KHQR codes + an Excel list of merchants**
 one sticker per page. Everything runs in the user's browser; no file is uploaded to a server.
 It deploys to Dokploy as an nginx container.
 
-Read next: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) (the agreed spec) and
+Read next: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) (the agreed spec; also as
+[PDF](<KHQR Roll Sticker PDF Generator - Development & Verification Plan.pdf>), exported from the Claude Doc, rev 36) and
 [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) (what changed during the build, and why;
 where the two differ, the notes win). The guide image is in
 [reference/](reference/guide-roll-sticker-khqr-single.png).
