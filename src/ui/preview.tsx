@@ -29,6 +29,7 @@ export function Preview() {
   const customFonts = useApp((s) => s.customFonts)
   const selected = useApp((s) => s.selected)
   const select = useApp((s) => s.select)
+  const source = useApp((s) => s.source)
   const settings = useSettings((s) => s.s)
   const { rows } = useRows()
   const idx = Math.min(Math.max(0, selected), rows.length - 1)
@@ -100,7 +101,7 @@ export function Preview() {
             <ChevronLeft />
           </button>
           <span className="min-w-32 border-x border-stone-200 px-2 text-center text-xs font-medium tabular-nums text-stone-700">
-            {row && row.index >= 0 ? <>Row {idx + 1} of {rows.length} <span className="font-normal text-stone-400">(Excel {row.excelRow})</span></> : 'Sample sticker'}
+            {row && row.index >= 0 ? <>Row {idx + 1} of {rows.length} <span className="font-normal text-stone-400">({source === 'pdf' ? 'Page' : 'Excel'} {row.excelRow})</span></> : 'Sample sticker'}
           </span>
           <button type="button" className="grid h-8 w-8 place-items-center rounded-r-lg text-brand transition hover:bg-brand-50 disabled:text-stone-300 disabled:hover:bg-transparent" disabled={idx >= rows.length - 1} onClick={() => select(idx + 1)} aria-label="Next row">
             <ChevronRight />
@@ -255,7 +256,7 @@ export function RowsTable() {
               <tr
                 key={r.index}
                 onClick={() => select(r.index)}
-                className={`cursor-pointer border-b border-stone-100 transition-colors ${selected === r.index ? 'bg-brand-50 shadow-[inset_3px_0_0_var(--color-brand)]' : 'hover:bg-stone-50'} ${inRange(r.excelRow) ? '' : 'opacity-40'}`}
+                className={`cursor-pointer border-b border-stone-100 transition-colors ${selected === r.index ? 'bg-brand-50 shadow-[inset_1px_0_0_var(--color-brand)]' : 'hover:bg-stone-50'} ${inRange(r.excelRow) ? '' : 'opacity-40'}`}
                 title={inRange(r.excelRow) ? undefined : 'Outside the export range'}
               >
                 <td className="py-1.5 pl-4 pr-3 tabular-nums text-stone-400">{r.excelRow}</td>

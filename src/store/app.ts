@@ -34,6 +34,11 @@ interface AppState {
   error: string | null
   assets: Partial<Record<AssetKind, AssetState>>
   workbookName: string | null
+  /** Where rows come from: an Excel file + QR files, or a generated KHQR PDF. */
+  source: 'excel' | 'pdf'
+  /** PDF import progress / summary. */
+  pdfBusy: [number, number] | null
+  pdfSummary: { pages: number; codes: number; pagesWithout: number } | null
   sheets: SheetData[]
   sheetIndex: number
   cols: ColumnMap
@@ -49,6 +54,8 @@ interface AppState {
   setAssetUrl: (kind: AssetKind, url: string, name: string) => Promise<void>
   resetAsset: (kind: AssetKind) => Promise<void>
   loadWorkbook: (file: File) => Promise<void>
+  setSource: (s: 'excel' | 'pdf') => void
+  loadPdf: (file: File) => Promise<void>
   setSheet: (i: number) => void
   setCols: (c: Partial<ColumnMap>) => void
   setRange: (r: Partial<RowRange>) => void
@@ -71,6 +78,9 @@ export const useApp = create<AppState>()((set, get) => ({
   error: null,
   assets: {},
   workbookName: null,
+  source: 'excel',
+  pdfBusy: null,
+  pdfSummary: null,
   sheets: [],
   sheetIndex: 0,
   cols: { name: -1, mid: -1, qr: -1 },
@@ -149,6 +159,37 @@ export const useApp = create<AppState>()((set, get) => ({
       set({ workbookName: file.name, sheets, sheetIndex: idx, cols: guessColumns(sheets[idx].headers), range: { from: null, to: null }, selected: 0, error: null })
     } catch (e) {
       set({ error: `${file.name}: ${(e as Error).message}` })
+    }
+  },
+
+  setSource: (source) => set({ source }),
+
+  loadPdf: async (file) => {
+    set({ pdfBusy: [0, 0], error: null })
+    try {
+      const { readKhqrPdf } = await import('../core/import/pdfRead')
+      const { pdfToSheet, PDF_COLS } = await import('../core/import/pdfText')
+      const { pages, images } = await readKhqrPdf(new Uint8Array(await file.arrayBuffer()), (p, t) => set({ pdfBusy: [p, t] }))
+      if (!images.length) throw new Error('No QR code found in this PDF.')
+      // Replace the loaded QR files with the codes cut from the PDF.
+      await get().clearQrFiles()
+      const results = await engine().addQrFiles(images.map((i) => ({ name: i.name, bytes: i.png, mime: 'image/png' })), true)
+      const sheet = pdfToSheet(file.name, pages)
+      const hasPayloadNames = sheet.rows.some((r) => r[PDF_COLS.name].text)
+      set({
+        workbookName: file.name,
+        sheets: [sheet],
+        sheetIndex: 0,
+        cols: { name: hasPayloadNames ? PDF_COLS.name : PDF_COLS.textName, mid: PDF_COLS.mid, qr: PDF_COLS.qr },
+        range: { from: null, to: null },
+        selected: 0,
+        qrFiles: results,
+        pdfSummary: { pages: pages.length, codes: images.length, pagesWithout: pages.filter((p) => !p.qrs.length).length },
+      })
+    } catch (e) {
+      set({ error: `${file.name}: ${(e as Error).message}` })
+    } finally {
+      set({ pdfBusy: null })
     }
   },
 

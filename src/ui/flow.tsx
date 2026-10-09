@@ -40,12 +40,15 @@ const INPUTS: Partial<Record<Kind, Port[]>> = {
   download: [{ id: 'preview', top: '56px' }],
   rows: [{ id: 'data', top: '50%' }],
 }
+// Outputs of collapsible cards sit on the card header (title strip ~22 px + header ~68 px),
+// so wires stay attached when a card is collapsed.
+const HEADER = 56
 const OUTPUTS: Partial<Record<Kind, Port[]>> = {
-  assets: [{ id: 'preview', top: '120px' }],
-  export: [{ id: 'preview', top: '56px' }],
-  data: [{ id: 'preview', top: '120px' }, { id: 'rows', top: '220px' }],
-  typography: [{ id: 'preview', top: '56px' }],
-  preview: [{ id: 'download', top: '56px' }],
+  assets: [{ id: 'preview', top: `${HEADER}px` }],
+  export: [{ id: 'preview', top: `${HEADER}px` }],
+  data: [{ id: 'preview', top: `${HEADER - 9}px` }, { id: 'rows', top: `${HEADER + 9}px` }],
+  typography: [{ id: 'preview', top: `${HEADER}px` }],
+  preview: [{ id: 'download', top: `${HEADER}px` }],
 }
 
 // Settings (assets, data, typography, export) feed the Preview; the Preview feeds Download.
@@ -58,10 +61,10 @@ const EDGES: Edge[] = [
   sourceHandle: `out-${target}`,
   targetHandle: `in-${source}`,
   animated: true,
-  style: { stroke: '#b1b1b7', strokeWidth: 1.5 },
+  style: { stroke: '#b1b1b7', strokeWidth: 1 },
 }))
 
-const handleCls = '!h-3 !w-3 !border-2 !border-white !bg-brand shadow-sm'
+const handleCls = '!h-2.5 !w-2.5 !border !border-white !bg-brand'
 
 /** Title strip the node is dragged by; the body stays fully interactive. */
 function Grip({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {

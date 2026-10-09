@@ -115,6 +115,26 @@ non-QR images, all EC levels, and module-exact coverage.
   shows a notice and a per-sticker `qr-small` warning. Thresholds are a conservative guess:
   confirm with the print-and-scan test.
 
+## Import from a generated KHQR PDF
+
+Data panel → Source → **Generated PDF** (`src/core/import/`). pdf.js (legacy build, which
+polyfills `Map#getOrInsertComputed` that the modern build needs and current browsers lack; loaded
+only when a PDF is opened) renders each page at ~2400 px. jsQR finds every code on the page: it
+scans the whole page, then overlapping windows (halves, thirds, quarters) because several codes
+side by side confuse its finder search; each code found is cropped with a 4-module quiet zone
+into a PNG, blanked, and the scan repeats. The PNGs go through the raster redraw pipeline (always
+on for `pdf-p…` files). Name and MID come from the KHQR payload (`src/core/qr/khqr.ts`: tag 59,
+tag 64-01 for the local-language name, tag 30-01 for the MID, CRC-16 check); the page text
+(MID line and the line above it) is the fallback. The result is a table (`pdfToSheet`) with one
+row per code, so column choice, export range ("PDF page numbers"), preview and export work as for
+Excel. pdf.js runs with no font faces, no WebAssembly and bundled standard fonts
+(`public/pdfjs/standard_fonts`, Foxit/Liberation licences included), inside the CSP; nginx serves
+`.mjs` (the pdf.js worker) as JavaScript, which its mime.types does not do by default.
+
+**Stroke weight:** every border, outline, focus ring, Flow wire and handle is 1 px; icons are
+drawn at 1 px (stroke 1.5 on a 24-unit grid shown at 16 px). **Flow:** output points of the
+collapsible cards sit on the card header, so wires stay attached when a card is collapsed.
+
 ## A6 design size
 
 **Vertical positions now follow the guide image** (owner's decision after comparing): frame

@@ -37,7 +37,7 @@ function HexInput({ value, onChange }: { value: string; onChange: (v: string) =>
         if (/^#?[0-9a-f]{6}$/i.test(v)) onChange(('#' + v.replace('#', '')).toLowerCase())
       }}
       onBlur={() => setDraft(null)}
-      className="w-24 rounded-lg border border-stone-200 px-2.5 py-2 font-mono text-xs uppercase text-stone-700 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
+      className="w-24 rounded-lg border border-stone-200 px-2.5 py-2 font-mono text-xs uppercase text-stone-700 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/10"
       aria-label="Corner color hex"
     />
   )
@@ -79,7 +79,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
             className="h-1.5 flex-1 cursor-pointer accent-brand disabled:cursor-not-allowed"
             aria-label="Corner radius"
           />
-          <div className="w-24"><NumberInput value={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} min={0} max={max} step={0.25} suffix="pt" disabled={!builtIn} /></div>
+          <div className="w-28"><NumberInput value={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} min={0} max={max} step={0.25} suffix="pt" disabled={!builtIn} /></div>
         </div>
         {!builtIn && <p className="mt-1 text-[11px] text-stone-500">Radius works with the built-in frame; an uploaded frame keeps its own shape.</p>}
       </div>
@@ -93,7 +93,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
           <HexInput value={s.cornerColor || (builtIn ? layout.corner.color : '')} onChange={(v) => set({ cornerColor: v })} />
           {[layout.corner.color, '#000000', '#d22026', '#ffffff'].map((c) => (
             <button key={c} type="button" title={c} aria-label={`Corner color ${c}`} onClick={() => set({ cornerColor: c === layout.corner.color && builtIn ? '' : c })}
-              className={`h-6 w-6 rounded-full ring-1 ring-inset ring-stone-300 transition hover:scale-110 ${color.toLowerCase() === c ? 'outline-2 outline-offset-2 outline-brand' : ''}`}
+              className={`h-6 w-6 rounded-full ring-1 ring-inset ring-stone-300 transition hover:scale-110 ${color.toLowerCase() === c ? 'outline-1 outline-offset-2 outline-brand' : ''}`}
               style={{ background: c }} />
           ))}
         </div>
@@ -113,7 +113,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
   return (
     <div
       {...drop.props}
-      className={`relative rounded-xl border bg-white p-3 transition-colors ${drop.over ? 'border-2 border-dashed border-brand bg-brand-50' : visible ? 'border-stone-200' : 'border-dashed border-stone-300 bg-stone-50/60'}`}
+      className={`relative rounded-xl border bg-white p-3 transition-colors ${drop.over ? 'border border-dashed border-brand bg-brand-50' : visible ? 'border-stone-200' : 'border-dashed border-stone-300 bg-stone-50/60'}`}
     >
       {drop.over && (
         <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-xl bg-brand-50/90 text-sm font-semibold text-brand">
@@ -206,6 +206,29 @@ export function DataPanel() {
 
   return (
     <Section title="Data" icon={<TableIcon className="h-4 w-4" />} badge={sheet ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand">{sheet.rows.length}</span> : null}>
+      <Field label="Source" group>
+        <Segmented value={app.source} onChange={(v) => app.setSource(v)} options={[{ value: 'excel', label: 'Excel + QR files' }, { value: 'pdf', label: 'Generated PDF' }]} />
+      </Field>
+      {app.source === 'pdf' ? (
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">1</span>KHQR PDF</div>
+          <DropZone onFiles={(f) => app.loadPdf(f[0])} accept={/\.pdf$/i}>
+            <div className="mb-2 text-stone-500">
+              {app.pdfBusy ? `Reading page ${app.pdfBusy[0]} of ${app.pdfBusy[1] || '…'}` : app.pdfSummary && app.workbookName ? app.workbookName : 'Drop a generated KHQR PDF here'}
+            </div>
+            <FileButton accept=".pdf,application/pdf" onFiles={(f) => app.loadPdf(f[0])}>{app.pdfSummary ? 'Replace PDF' : 'Choose PDF'}</FileButton>
+          </DropZone>
+          <p className="mt-1.5 text-[11px] leading-snug text-stone-500">Each QR code is read from the PDF and redrawn as vector. Merchant name and MID come from the KHQR code itself (tags 59 and 30-01); the page text is the fallback.</p>
+          {app.pdfSummary && (
+            <div className="mt-2">
+              <Notice tone={app.pdfSummary.pagesWithout ? 'warn' : 'ok'}>
+                {app.pdfSummary.codes} QR code{app.pdfSummary.codes === 1 ? '' : 's'} found on {app.pdfSummary.pages} page{app.pdfSummary.pages === 1 ? '' : 's'}.
+                {app.pdfSummary.pagesWithout > 0 && ` ${app.pdfSummary.pagesWithout} page${app.pdfSummary.pagesWithout === 1 ? '' : 's'} without a QR code.`}
+              </Notice>
+            </div>
+          )}
+        </div>
+      ) : (
       <div>
         <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">1</span>Excel file</div>
         <DropZone onFiles={(f) => app.loadWorkbook(f[0])} accept={/\.(xlsx|xls|xlsm|csv|ods)$/i}>
@@ -213,6 +236,7 @@ export function DataPanel() {
           <FileButton accept=".xlsx,.xls,.xlsm,.csv,.ods" onFiles={(f) => app.loadWorkbook(f[0])}>{app.workbookName ? 'Replace file' : 'Choose file'}</FileButton>
         </DropZone>
       </div>
+      )}
       {sheet && (
         <div className="grid grid-cols-2 gap-2">
           {app.sheets.length > 1 && (
@@ -225,12 +249,12 @@ export function DataPanel() {
           <Field label="Merchant name column"><Select value={app.cols.name} onChange={(v) => app.setCols({ name: v })} options={colOptions} /></Field>
           <Field label="MID column"><Select value={app.cols.mid} onChange={(v) => app.setCols({ mid: v })} options={colOptions} /></Field>
           <div className="col-span-2">
-            <Field label="QR file name column" hint="If none, QR files are matched by MID (e.g. 124092620291906.svg or KHQR_124092620291906.png).">
+            <Field label="QR file name column" hint={app.source === 'pdf' ? 'Codes cut from the PDF (one per QR found).' : 'If none, QR files are matched by MID (e.g. 124092620291906.svg or KHQR_124092620291906.png).'}>
               <Select value={app.cols.qr} onChange={(v) => app.setCols({ qr: v })} options={colOptions} />
             </Field>
           </div>
           <div className="col-span-2">
-            <Field label="Export rows (Excel row numbers)" group hint={rangeHint(derived.rows.length, rowsInRange(derived.rows, app.range).length, app.range)}>
+            <Field label={app.source === 'pdf' ? 'Export rows (PDF page numbers)' : 'Export rows (Excel row numbers)'} group hint={rangeHint(derived.rows.length, rowsInRange(derived.rows, app.range).length, app.range)}>
               <div className="flex items-center gap-2">
                 <OptionalIntInput value={app.range.from} onChange={(v) => app.setRange({ from: v })} min={1} placeholder={`${derived.rows[0]?.excelRow ?? ''} (first)`} ariaLabel="First row" />
                 <span className="text-xs text-stone-500">to</span>
@@ -243,6 +267,7 @@ export function DataPanel() {
           </div>
         </div>
       )}
+      {app.source === 'excel' && (<>
       <div>
         <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">2</span>QR files</div>
         <DropZone onFiles={(f) => app.addQrFiles(f)} accept={/\.(svg|png|jpe?g|webp)$/i}>
@@ -262,6 +287,7 @@ export function DataPanel() {
         label="Redraw raster QR as vector"
         hint="PNG/JPG QRs are decoded, redrawn as vector modules and re-verified. SVG QRs are used as they are."
       />
+      </>)}
       {sheet && (
         <div className="space-y-1">
           <Notice tone={matched === sheet.rows.length ? 'ok' : 'warn'}>
@@ -304,7 +330,7 @@ function FontPicker({ script }: { script: FontScript }) {
   ]
   const label = script === 'latin' ? 'English' : 'Khmer'
   return (
-    <div {...drop.props} className={`rounded-xl border p-3 transition-colors ${drop.over ? 'border-2 border-dashed border-brand bg-brand-50' : 'border-stone-200'}`}>
+    <div {...drop.props} className={`rounded-xl border p-3 transition-colors ${drop.over ? 'border border-dashed border-brand bg-brand-50' : 'border-stone-200'}`}>
       <Field label={`Merchant name font: ${label}`}>
         <Select value={value} onChange={(v) => set(script === 'latin' ? { nameFontLatin: v } : { nameFontKhmer: v })} options={options} />
       </Field>

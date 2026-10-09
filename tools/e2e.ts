@@ -3,12 +3,14 @@
  * Serves dist/ with the production CSP, uploads fixtures, downloads the PDF.
  * Usage: tsx tools/e2e.ts <outDir>
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { join, extname } from 'node:path'
 import { chromium } from 'playwright'
 import * as XLSX from 'xlsx'
 import QRCode from 'qrcode'
+import { PDFDocument, StandardFonts } from 'pdf-lib'
+import { buildKhqr } from '../src/core/qr/khqr'
 
 const out = process.argv[2] ?? 'out/e2e'
 mkdirSync(out, { recursive: true })
@@ -29,7 +31,7 @@ const xlsxPath = join(out, 'merchants.xlsx')
 writeFileSync(xlsxPath, XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 const qrPaths: string[] = []
 for (let i = 1; i <= 5; i++) {
-  const payload = `00020101021230510016abaakhppxxx@abaa0115${rows[i][3]}5925${String(rows[i][2]).slice(0, 25)}6010Phnom Penh6304TEST`
+  const payload = buildKhqr({ name: String(rows[i][2]).slice(0, 25), mid: String(rows[i][3]), account: 'abaakhppxxx@abaa' })
   if (i === 3 || i === 5) {
     const p = join(out, `qr_00${i}.png`)
     writeFileSync(p, await QRCode.toBuffer(payload, { margin: 4, scale: i === 3 ? 7 : 4 }))
@@ -43,7 +45,7 @@ for (let i = 1; i <= 5; i++) {
 
 // --- static server with production CSP (copied from nginx.conf) ---
 const csp = /Content-Security-Policy "([^"]+)"/.exec(readFileSync('nginx.conf', 'utf8'))![1]
-const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.wasm': 'application/wasm', '.ttf': 'font/ttf' }
+const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.wasm': 'application/wasm', '.ttf': 'font/ttf' }
 const server = createServer((req, res) => {
   let p = join('dist', decodeURIComponent((req.url ?? '/').split('?')[0]))
   if (!existsSync(p) || p.endsWith('/') || p === 'dist') p = join('dist', 'index.html')
@@ -104,6 +106,23 @@ if (handles !== 12) throw new Error(`expected 12 handles, got ${handles}`)
 // Download node builds the PDF too
 const [dlf] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.locator('.react-flow__node-panel').filter({ hasText: 'Builds the PDF' }).getByRole('button', { name: /^Download PDF/ }).click()])
 console.log('downloaded from flow node', dlf.suggestedFilename())
+// Collapse every collapsible card: each output point must stay on its card
+for (const id of ['assets', 'data', 'typography', 'export']) {
+  await page.locator(`.react-flow__node[data-id="${id}"] section > div > button`).first().click()
+}
+await page.waitForTimeout(600)
+await page.screenshot({ path: join(out, '3c-flow-collapsed.png') })
+for (const id of ['assets', 'data', 'typography', 'export']) {
+  const node = (await page.locator(`.react-flow__node[data-id="${id}"] section`).boundingBox())!
+  for (const h of await page.locator(`.react-flow__node[data-id="${id}"] .react-flow__handle`).all()) {
+    const b = (await h.boundingBox())!
+    const cy = b.y + b.height / 2
+    if (cy < node.y || cy > node.y + node.height) throw new Error(`${id}: wire point off the collapsed card`)
+  }
+}
+for (const id of ['assets', 'data', 'typography', 'export']) {
+  await page.locator(`.react-flow__node[data-id="${id}"] section > div > button`).first().click()
+}
 await page.getByRole('radio', { name: 'Cards' }).click()
 await page.waitForSelector('aside', { timeout: 5000 })
 console.log('flow view ok')
@@ -221,6 +240,60 @@ await page.locator('select').filter({ hasText: 'One combined PDF' }).selectOptio
 const [dl2] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.getByRole('button', { name: /^Download/ }).click()])
 await dl2.saveAs(join(out, dl2.suggestedFilename()))
 console.log('downloaded', dl2.suggestedFilename())
+
+// Data source: a generated KHQR PDF (bank-style: QR images + text; 2 codes on page 2; page 3 without a code)
+{
+  const bank = await PDFDocument.create()
+  const font = await bank.embedFont(StandardFonts.Helvetica)
+  const add = async (codes: { name: string; mid: string; alt?: string }[], label?: string) => {
+    const pg = bank.addPage([297.64, 419.53])
+    for (const [i, c] of codes.entries()) {
+      const png = await bank.embedPng(await QRCode.toBuffer(buildKhqr({ name: c.name, mid: c.mid, altName: c.alt }), { margin: 4, scale: 6 }))
+      const x = codes.length === 1 ? 74 : 20 + i * 140
+      pg.drawImage(png, { x, y: 200, width: codes.length === 1 ? 150 : 120, height: codes.length === 1 ? 150 : 120 })
+    }
+    if (label) {
+      pg.drawText(codes[0]?.name ?? label, { x: 60, y: 160, size: 16, font })
+      pg.drawText(`MID: ${codes[0]?.mid ?? '999888777666'}`, { x: 60, y: 135, size: 11, font })
+    }
+  }
+  await add([{ name: 'Lucky Mart', mid: '124092620291911', alt: 'ផ្សារសំណាង' }], 'x')
+  await add([{ name: 'Shop Two A', mid: '124092620291912' }, { name: 'Shop Two B', mid: '124092620291913' }])
+  await add([], 'Blank page')
+  const bankPath = join(out, 'bank-generated.pdf')
+  writeFileSync(bankPath, await bank.save())
+
+  await page.getByRole('radio', { name: 'Generated PDF' }).click()
+  await page.locator('input[type=file][accept*=".pdf"]').setInputFiles(bankPath)
+  try {
+    await page.waitForFunction(() => document.body.innerText.includes('3 QR codes found on 3 pages'), null, { timeout: 60000 })
+  } catch (e) {
+    await page.screenshot({ path: join(out, '6-pdf-fail.png') })
+    console.log('PDF import failed. Console:', logs.slice(-15), '\nData panel:', (await page.locator('aside').innerText()).slice(0, 1500))
+    throw e
+  }
+  await page.waitForTimeout(800)
+  const body = await page.locator('tbody').innerText()
+  for (const t of ['Lucky Mart', 'Shop Two A', 'Shop Two B', '124092620291913']) if (!body.includes(t)) throw new Error(`PDF import: "${t}" missing`)
+  if ((await page.locator('tbody tr').count()) !== 4) throw new Error('PDF import: expected 4 rows (3 codes + 1 page without)')
+  await page.screenshot({ path: join(out, '6-pdf-import.png') })
+  // Khmer name from the KHQR alternate-language field
+  await page.locator('select').filter({ hasText: 'Merchant Name (local language)' }).first().selectOption({ label: 'Merchant Name (local language)' })
+  await page.waitForTimeout(500)
+  if (!(await page.locator('tbody').innerText()).includes('ផ្សារសំណាង')) throw new Error('PDF import: Khmer name missing')
+  console.log('pdf import (bank-style) ok')
+
+  // Re-import a PDF made by this app (vector QR, outlined text): names and MIDs come from the codes
+  const own = join(out, readdirSync(out).find((f) => /_A6_bleed_5p\.pdf$/.test(f))!)
+  await page.locator('input[type=file][accept*=".pdf"]').setInputFiles(own)
+  await page.waitForFunction(() => document.body.innerText.includes('5 QR codes found on 5 pages'), null, { timeout: 60000 })
+  await page.waitForTimeout(500)
+  const ownBody = await page.locator('tbody').innerText()
+  if (!ownBody.includes('The Pizza Company Sihanou') || !ownBody.includes('124092620291906')) throw new Error('re-import of own PDF failed')
+  const [dlp] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.getByRole('button', { name: /^Download/ }).first().click()])
+  console.log('pdf import (own export) ok →', dlp.suggestedFilename())
+  await page.getByRole('radio', { name: 'Excel + QR files' }).click()
+}
 
 // Mobile layout (both views)
 await page.setViewportSize({ width: 390, height: 844 })

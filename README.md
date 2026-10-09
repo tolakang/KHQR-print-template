@@ -7,7 +7,8 @@ to a server.
 
 ## Features
 - Upload background, Bakong logo and corner frame (SVG); defaults included.
-- Excel/CSV import with column mapping (merchant name, MID, QR file name).
+- Excel/CSV import with column mapping (merchant name, MID, QR file name), or a generated KHQR PDF:
+  every QR code on every page is read and redrawn; name and MID come from the KHQR code (page text as fallback).
 - QR files as SVG, or PNG/JPG redrawn as verified vector.
 - Name wrap by whole word: 25 chars and the safe width, max 2 lines; MID max 15 (configurable).
 - Page sizes Original, A3–A7, custom; bleed (default 3 mm, per side), banded edge fill, crop marks.
