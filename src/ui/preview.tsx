@@ -24,7 +24,12 @@ const MIN_ZOOM = 0.5 * ACTUAL
 const MAX_ZOOM = 8
 const zoomBtn = 'grid h-8 w-8 place-items-center text-stone-600 transition hover:bg-brand-50 hover:text-brand first:rounded-l-lg'
 
-export function Preview() {
+/**
+ * `fill`: the stage takes whatever height is left in a fixed-height parent (desktop, Flow node).
+ * Otherwise (phones) the stage has its own height and the bars below add to the card height,
+ * so the position controls never cover the sticker.
+ */
+export function Preview({ fill = false }: { fill?: boolean } = {}) {
   const ready = useApp((s) => s.ready)
   const assets = useApp((s) => s.assets)
   const customFonts = useApp((s) => s.customFonts)
@@ -135,7 +140,7 @@ export function Preview() {
           {guidesToggle}
         </div>
       </div>
-      <div className="relative min-h-0 flex-1">
+      <div className={`relative ${fill ? 'min-h-0 flex-1' : 'h-[62vh] shrink-0 md:h-auto md:min-h-0 md:flex-1'}`}>
       <div
         ref={viewRef}
         className={`nodrag nopan absolute inset-0 overflow-auto bg-[#f5f5f4] bg-[radial-gradient(circle,#dcd9d6_1px,transparent_1.2px)] bg-[size:18px_18px] ${canPan ? (panning ? 'cursor-grabbing select-none' : 'cursor-grab') : ''}`}
