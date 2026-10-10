@@ -155,6 +155,12 @@ migrated. Artwork within 0.5 % of the trim's shape fills it exactly (a5.svg is 1
 off), so A3–A7 have no edge bands. Template-conformance tests map the template's measurements
 through the same factor.
 
+**Update (Oct 2026): exact guide sizes.** The owner asked for the guide's exact sizes, so the
+×0.981351 scaling is gone: QR 134, logo 32, frame 154.3 (2.7 / 37.02 / 13.25), name 23 pt, MID
+10 pt, safe width 277.5. Elements are centred on the A6 width; frame 98 and QR 107.6 from the top,
+name cap top 38 below the QR (`name.gapFromQr`), MID cap top 22 below the name baseline. Saved
+scaled defaults (22.571 / 9.814 / 13.003 / 12.656) are migrated to the new defaults.
+
 ## UI refresh and fixes (after the first deploy)
 
 - **Blank Bakong logo** (`public/artwork/bkw.svg`): the logo shape filled all white (a plain

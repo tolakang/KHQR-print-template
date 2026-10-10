@@ -2,29 +2,29 @@ import { describe, it, expect } from 'vitest'
 import { layout, limits, fitScale, mmToPt, scaleToTarget } from '../src/config'
 
 const PT = 72 / 25.4 // pt per mm
-const K = (148 * PT) / 427.5 // original 317.5 × 427.5 design → A6
 const CX = (105 * PT) / 2
 
 describe('layout guide numbers (A6 design)', () => {
   it('artboard is A6 exactly: 105 × 148 mm = 297.6378 × 419.5276 pt', () => {
     expect(layout.artboard.w).toBeCloseTo(105 * PT, 3)
     expect(layout.artboard.h).toBeCloseTo(148 * PT, 3)
-    expect(layout.designScale?.factor).toBeCloseTo(K, 5)
   })
-  it('every element is the guide-image value × 0.981351, re-centred', () => {
-    const X = (x: number) => (x - 158.75) * K + CX
-    expect(layout.qr.size).toBeCloseTo(134 * K, 2)
-    expect(layout.qr.x).toBeCloseTo(X(91.75), 2)
-    expect(layout.qr.y).toBeCloseTo(107.6 * K, 2) // guide: 107.6 from the top
-    expect(layout.corner.y).toBeCloseTo(98 * K, 2) // guide: 98 from the top
-    expect(layout.corner.x).toBeCloseTo(X(81.6), 2) // guide: 81.6 from the sides
-    expect(layout.artboard.h - layout.name.baselineY).toBeCloseTo(130 * K, 2) // guide: 130 to the bottom
-    expect(layout.mid.gapFromName).toBeCloseTo(22 * K, 2) // guide: 22 baseline → MID
-    expect(layout.corner.size).toBeCloseTo(154.3 * K, 2)
-    expect(layout.logo.size).toBeCloseTo(32 * K, 2)
-    expect(layout.name.sizePt).toBeCloseTo(23 * K, 2)
-    expect(layout.mid.sizePt).toBeCloseTo(10 * K, 2)
-    expect(layout.artboard.w - 2 * layout.safeMarginPt).toBeCloseTo(277.5 * K, 2)
+  it('sizes and vertical distances are the guide-image values exactly, centred on the A6 width', () => {
+    // Guide drawn at 317.5 pt wide (centre 158.75); x values are re-centred on A6.
+    const X = (x: number) => x - 158.75 + CX
+    expect(layout.qr.size).toBe(134)
+    expect(layout.qr.x).toBeCloseTo(X(91.75), 3)
+    expect(layout.qr.y).toBe(107.6) // guide: 107.6 from the top
+    expect(layout.corner.size).toBe(154.3)
+    expect(layout.corner.y).toBe(98) // guide: 98 from the top
+    expect(layout.corner.x).toBeCloseTo(X(81.6), 3)
+    expect([layout.corner.stroke, layout.corner.arm, layout.corner.radius]).toEqual([2.7, 37.02, 13.25])
+    expect(layout.logo.size).toBe(32)
+    expect(layout.name.sizePt).toBe(23)
+    expect(layout.name.gapFromQr).toBe(38) // guide: 38 from the QR to the name
+    expect(layout.mid.sizePt).toBe(10)
+    expect(layout.mid.gapFromName).toBe(22) // guide: 22 baseline → MID
+    expect(layout.artboard.w - 2 * layout.safeMarginPt).toBeCloseTo(277.5, 3)
   })
   it('QR is centred', () => {
     expect(layout.qr.x * 2 + layout.qr.size).toBeCloseTo(layout.artboard.w, 2)
@@ -37,7 +37,7 @@ describe('layout guide numbers (A6 design)', () => {
   it('logo is concentric with the QR; the frame is 0.55 pt lower (guide 98 vs concentric 97.45)', () => {
     const cy = (b: { y: number; size: number }) => b.y + b.size / 2
     expect(cy(layout.logo)).toBeCloseTo(cy(layout.qr), 1)
-    expect(cy(layout.corner) - cy(layout.qr)).toBeCloseTo(0.55 * K, 2)
+    expect(cy(layout.corner) - cy(layout.qr)).toBeCloseTo(0.55, 2)
     expect(layout.corner.x + layout.corner.size / 2).toBeCloseTo(CX, 1)
   })
   it('limits', () => {

@@ -27,9 +27,9 @@ beforeAll(async () => {
 
 // The guide image is drawn at 317.5 × 427.5 pt; the A6 design is that design × K,
 // re-centred. Guide numbers below go through the same mapping.
-const K = (148 * 72) / 25.4 / 427.5
-const X = (x: number) => (x - 158.75) * K + (105 * 72) / 25.4 / 2
-const Y = (y: number) => y * K
+const K = 1 // guide sizes are used exactly
+const X = (x: number) => x - 158.75 + (105 * 72) / 25.4 / 2
+const Y = (y: number) => y
 
 /** Index of items by role: compose then slice by known order. */
 function compose(name: string, mid = '124092620291906') {
@@ -59,13 +59,12 @@ describe('sticker matches the guide image (KH guide, 317.5 × 427.5 pt terms)', 
     expect(b.x1).toBeCloseTo(X(142.75), 1)
     expect(b.y1).toBeCloseTo(Y(107.6 + 67 - 16), 1)
   })
-  it('name baseline is 130 above the bottom; MID cap top 22 below it; both centred', () => {
-    // "HELLO" has a flat baseline; MID digits are cap height.
+  it('name cap top is 38 below the QR; MID cap top 22 below the name baseline; both centred', () => {
+    // "HELLO" has a flat baseline and cap-height letters; MID digits are cap height.
     const r = compose('HELLO')
     const name = inkBBox(r.items.filter((_, k) => r.roles[k] === 'name'))!
     const mid = inkBBox(r.items.filter((_, k) => r.roles[k] === 'mid'))!
-    const H = (148 * 72) / 25.4
-    expect(H - name.y2).toBeCloseTo(130 * K, 0)
+    expect(name.y1 - (107.6 + 134)).toBeCloseTo(38, 0)
     expect(mid.y1 - name.y2).toBeCloseTo(22 * K, 0)
     expect((name.x1 + name.x2) / 2).toBeCloseTo(X(158.75), 0)
     expect((mid.x1 + mid.x2) / 2).toBeCloseTo(X(158.75), 0)
@@ -73,8 +72,9 @@ describe('sticker matches the guide image (KH guide, 317.5 × 427.5 pt terms)', 
   it('a Khmer name sits on the same baseline', () => {
     const r = compose('អានីតា មួបខ្មែរ', '125090512311628')
     const name = inkBBox(r.items.filter((_, k) => r.roles[k] === 'name'))!
-    expect(name.y1).toBeLessThan(Y(297.5)) // letters above the baseline …
-    expect(name.y2).toBeGreaterThan(Y(297.5)) // … subscripts below it
+    const latinBaseline = inkBBox(compose('HELLO').items.filter((_, k, a) => a && compose('HELLO').roles[k] === 'name'))!.y2
+    expect(name.y1).toBeLessThan(latinBaseline) // letters above the baseline …
+    expect(name.y2).toBeGreaterThan(latinBaseline) // … subscripts below it
   })
   it('MID moves up under a one-line name', () => {
     const one = inkBBox([compose('Lucky').items.at(-1)!])!

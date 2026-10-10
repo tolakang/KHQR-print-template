@@ -109,19 +109,18 @@ what you see is what prints.
 
 ## 6. Decisions you should know before changing anything
 
-0. **The design is A6 (297.638 × 419.528 pt), the default page size.** The guide was drawn at
-   317.5 × 427.5 pt, but the background artwork is A-proportioned, so it left ~7 pt side strips.
-   Every guide number in `layout.json` was scaled by 419.528 / 427.5 = 0.981351 (x re-centred), so
-   QR (now 131.5 pt), frame, logo and text keep their place on the artwork, and the background fills
-   the page exactly, edge to edge. The numbers below are guide values; `layout.json → _notes` lists
-   them. Page sizes are exact (mm × 72 / 25.4).
+0. **The design is A6 (297.638 × 419.528 pt), the default page size, with the guide's exact
+   sizes** (owner's request, Oct 2026): QR 134, logo 32, frame 154.3 (stroke 2.7, arms 37.02,
+   radius 13.25), name 23 pt, MID 10 pt, text safe width 277.5. The guide was drawn at
+   317.5 × 427.5 pt, so the elements are centred on the A6 width and the vertical distances are
+   kept from the top. (Before this, every guide number was scaled ×0.981351 to fit A6.)
 1. **Positions follow the guide image (KH guide)**, not the Affinity vector templates: frame 98 and
-   QR 107.6 from the top, name baseline 130 above the bottom, MID cap top 22 below the baseline
-   (in 317.5 × 427.5 pt guide terms, then × 0.981351 for A6). The templates had frame 101.45,
-   QR 111.6, baseline 127.6 and MID 17; the owner chose the guide. The guide's frame is 0.55 pt
-   below concentric with the QR; kept as drawn. `tests/sticker.test.ts` pins these values.
+   QR 107.6 from the top, name cap top 38 below the QR, MID cap top 22 below the last name
+   baseline. A6 is 7.97 pt shorter than the guide drawing, so the guide's "130 above the bottom"
+   becomes ~122. The guide's frame is 0.55 pt below concentric with the QR; kept as drawn.
+   `tests/config.test.ts` and `tests/sticker.test.ts` pin these values.
 2. **The whole name is at most 25 characters** (all lines together, spaces included; the
-   KHQR merchant-name limit; the setting cannot go higher). Extra whole words are dropped and
+   KHQR merchant-name limit; the setting cannot go higher). The name is cut at exactly that many characters (even mid-word) and
    flagged ("Name trimmed" in the table). Lines break at the safe width (artboard − 2 × 20 pt),
    max 2 lines; never shrink automatically. This reproduces the guide's "The Pizza Company / Sihanou".
 3. **MID follows the last name line** (KH template). "Fixed" is a setting.
