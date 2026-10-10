@@ -192,6 +192,12 @@ scaled defaults (22.571 / 9.814 / 13.003 / 12.656) are migrated to the new defau
   The header has Download only; Download + Print also sit at the end of the Export tab (and in
   the Flow Download node). Favicon: QR mark in brand red (`public/favicon.svg`, plus
   `favicon-32.png` and a square `apple-touch-icon.png`). Flow wires: #8f8f99, 1.5 px.
+- **Units** (`src/config/units.ts`, `useUnit`, `LengthInput`): one app-wide mm / pt / px switch in
+  the header (a select on phones), stored as `settings.unit` (default mm; migrated from the old
+  `positionUnit`). Every length field and readout follows it: position X/Y, corner radius, side
+  safe margin, custom page size, bleed, the QR print-size hint and the preview size. Values stay
+  stored in pt (bleed and custom size in mm). px = CSS px, 96 per inch (1 px = 0.75 pt). Font sizes
+  stay in pt. Default side safe margin: 3.5 mm (9.9213 pt).
 - **Settings tabs** (`src/ui/settingsTabs.tsx`): in Cards view the four sections share one
   panel with a tab bar (Assets · Data · Typography · Export; Data shows the row count). The
   open tab is remembered (`settingsTab` in the `khqr-ui` store). Panels render without their
