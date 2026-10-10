@@ -2,26 +2,27 @@
 import type { ReactNode } from 'react'
 import { useUi, type SettingsTab } from '../store/ui'
 import { useApp } from '../store/app'
-import { AssetsPanel, DataPanel, TypographyPanel, PositionPanel, ExportPanel } from './panels'
+import { AssetsPanel, DataPanel, TypographyPanel, ExportPanel } from './panels'
 import { PlainSection } from './sectionMode'
-import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Move } from './icons'
+import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut } from './icons'
 
 const TABS: { id: SettingsTab; label: string; icon: (active: boolean) => ReactNode }[] = [
   { id: 'assets', label: 'Assets', icon: (a) => <ImageIcon className="h-[18px] w-[18px]" strokeWidth={a ? 2 : 1.75} /> },
   { id: 'data', label: 'Data', icon: (a) => <TableIcon className="h-[18px] w-[18px]" strokeWidth={a ? 2 : 1.75} /> },
   { id: 'typography', label: 'Typography', icon: (a) => <TypeIcon className="h-[18px] w-[18px]" strokeWidth={a ? 2 : 1.75} /> },
-  { id: 'position', label: 'Position', icon: (a) => <Move className="h-[18px] w-[18px]" strokeWidth={a ? 2 : 1.75} /> },
   { id: 'export', label: 'Export', icon: (a) => <FileOut className="h-[18px] w-[18px]" strokeWidth={a ? 2 : 1.75} /> },
 ]
 
 export function SettingsTabs() {
-  const tab = useUi((x) => x.settingsTab)
+  const stored = useUi((x) => x.settingsTab)
+  // A tab saved by an older version (e.g. the removed Position tab) falls back to Assets.
+  const tab = TABS.some((t) => t.id === stored) ? stored : 'assets'
   const setTab = useUi((x) => x.setSettingsTab)
   const rows = useApp((x) => x.sheets[x.sheetIndex]?.rows.length ?? 0)
   return (
     <div className="card flex min-h-0 flex-col overflow-hidden md:flex-1">
       <div className="shrink-0 border-b border-stone-200/70 p-2">
-        <div className="grid grid-cols-5 gap-1 rounded-xl bg-stone-100/80 p-1" role="tablist" aria-label="Settings">
+        <div className="grid grid-cols-4 gap-1 rounded-xl bg-stone-100/80 p-1" role="tablist" aria-label="Settings">
           {TABS.map((t) => {
             const active = tab === t.id
             return (
@@ -57,7 +58,6 @@ export function SettingsTabs() {
           {tab === 'assets' && <AssetsPanel />}
           {tab === 'data' && <DataPanel />}
           {tab === 'typography' && <TypographyPanel />}
-          {tab === 'position' && <PositionPanel />}
           {tab === 'export' && <ExportPanel />}
         </PlainSection.Provider>
       </div>

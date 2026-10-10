@@ -190,11 +190,12 @@ through the same factor.
   panel with a tab bar (Assets · Data · Typography · Export; Data shows the row count). The
   open tab is remembered (`settingsTab` in the `khqr-ui` store). Panels render without their
   own card inside the tabs (`PlainSection` context); the Typography Reset sits at the top.
-- **Position** (tab / Flow node, `PositionPanel`): X/Y shifts from the guide position for the
-  corner frame, QR (the Bakong logo moves with it), merchant name and MID, shown in mm or pt and
-  stored in pt (`settings.offsets`, x right / y down). With MID "Follow name" the MID also moves
-  with the name. Shifts are clamped to ±1 artboard width; anything pushed past the sticker edge
-  gets an `off-page` warning. Reset per element and Reset all.
+- **Position** (`src/ui/positionBar.tsx`, bottom of the Preview card in both views): tabs for
+  corner frame, QR (the Bakong logo moves with it), merchant name and MID; X/Y shifts from the guide
+  position in mm or pt, stored in pt (`settings.offsets`, x right / y down). With MID "Follow
+  name" the MID also moves with the name. Shifts are clamped to ±1 artboard width; anything pushed
+  past the sticker edge gets an `off-page` warning. Reset per element and Reset all; the bar can be
+  collapsed (`positionOpen` in the `khqr-ui` store).
 - **Flow view** (`src/ui/flow.tsx`, React Flow `@xyflow/react` 12): a Cards / Flow switch in
   the header (desktop and phones; phones open zoomed to the Preview node, no minimap). The same
   Assets, Data, Typography and Export panels, the Preview, a Download node and the rows table
