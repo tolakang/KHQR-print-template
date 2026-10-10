@@ -7,6 +7,7 @@ import { qrPrintSize } from '../core/qr/printSize'
 import { rowsInRange } from '../core/excel/read'
 import { layout, mmToPt, NAME_CHARS_MAX } from '../config'
 import { useUnit } from './useUnit'
+import { exact } from '../config/units'
 import { NAME_FONTS, CUSTOM_FONT, type FontScript } from '../config/fonts'
 import { Section, Field, NumberInput, LengthInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
 import { useFileDrop } from './useFileDrop'
@@ -383,8 +384,8 @@ export function TypographyPanel() {
   )
 }
 
-/** Stored mm values keep 4 decimals so unit round trips stay clean. */
-const ptToMm = (pt: number) => Math.round((pt / mmToPt(1)) * 1e4) / 1e4
+/** Bleed and custom page size are stored in mm, exactly. */
+const ptToMm = (pt: number) => exact(pt / mmToPt(1))
 
 const PAGE_SIZES: { value: PageSizeName; label: string }[] = [
   { value: 'A3', label: 'A3 (297 × 420 mm)' },
@@ -416,7 +417,7 @@ export function ExportPanel() {
       {qrSize.tooSmall ? (
         <Notice>{qrSize.message}</Notice>
       ) : (
-        <p className="text-[11px] leading-snug text-stone-500">QR prints at {u.fmt(mmToPt(qrSize.qrMm), 1)}.</p>
+        <p className="text-[11px] leading-snug text-stone-500">QR prints at {u.fmt(mmToPt(qrSize.qrMm))}.</p>
       )}
       <Toggle
         checked={s.background}

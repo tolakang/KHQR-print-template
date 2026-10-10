@@ -197,7 +197,9 @@ scaled defaults (22.571 / 9.814 / 13.003 / 12.656) are migrated to the new defau
   `positionUnit`). Every length field and readout follows it: position X/Y, corner radius, side
   safe margin, custom page size, bleed, the QR print-size hint and the preview size. Values stay
   stored in pt (bleed and custom size in mm). px = CSS px, 96 per inch (1 px = 0.75 pt). Name and
-  MID font sizes follow the unit too (23 pt = 8.11 mm = 30.67 px). Default side safe margin: 3.5 mm (9.9213 pt).
+  MID font sizes follow the unit too (23 pt = 8.11 mm = 30.67 px). Default side safe margin: 3.5 mm (9.92125984251969 pt).
+  Nothing is rounded: converted values are shown exactly (`exact()`: 15 significant digits, which
+  only drops floating-point noise), and the layout coordinates are exact computed values.
 - **Settings tabs** (`src/ui/settingsTabs.tsx`): in Cards view the four sections share one
   panel with a tab bar (Assets · Data · Typography · Export; Data shows the row count). The
   open tab is remembered (`settingsTab` in the `khqr-ui` store). Panels render without their

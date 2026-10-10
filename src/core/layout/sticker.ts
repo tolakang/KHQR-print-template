@@ -1,6 +1,6 @@
 /**
  * Composes one sticker (everything except the background) in artboard
- * coordinates: A6, 297.6378 × 419.5276 pt (layout.json), origin top-left, y down.
+ * coordinates: A6, 297.637795275591 × 419.527559055118 pt (layout.json), origin top-left, y down.
  */
 import { layout as defaultLayout, limits as defaultLimits, type Layout, type Limits } from '../../config'
 import { parsePathData, transformPath, type Path } from '../geom/path'

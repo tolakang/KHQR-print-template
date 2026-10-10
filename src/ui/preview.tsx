@@ -6,6 +6,7 @@ import { engine } from '../engine/client'
 import type { PreviewResult, RowInput } from '../engine/types'
 import { PositionBar } from './positionBar'
 import { useUnit } from './useUnit'
+import { exact } from '../config/units'
 import { ChevronLeft, ChevronRight, Alert, Check, Minus, Plus, Maximize } from './icons'
 
 const PT_TO_MM = 25.4 / 72
@@ -202,7 +203,7 @@ export function Preview({ fill = false }: { fill?: boolean } = {}) {
               </>
             )}
             <span className="font-medium tabular-nums text-stone-500">
-              {u.show(res.width)} × {u.fmt(res.height)}{u.unit !== 'mm' && <span className="text-stone-400"> · {(res.width * PT_TO_MM).toFixed(1)} × {(res.height * PT_TO_MM).toFixed(1)} mm</span>}
+              {u.show(res.width)} × {u.fmt(res.height)}{u.unit !== 'mm' && <span className="text-stone-400"> · {exact(res.width * PT_TO_MM)} × {exact(res.height * PT_TO_MM)} mm</span>}
             </span>
           </div>
         </div>
