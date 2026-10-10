@@ -174,6 +174,7 @@ export class Engine {
       midPosition: s.midPosition,
       textColor: [0, 0, 0],
       showCorner: s.showCorner,
+      offsets: clampOffsets(s.offsets),
     }
   }
 
@@ -323,3 +324,11 @@ export class Engine {
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo))
 
 export { mmToPt }
+
+/** Position shifts are limited to ±1 artboard width (pt); missing or bad values count as 0. */
+function clampOffsets(o: Settings['offsets'] | undefined): Settings['offsets'] {
+  const lim = layout.artboard.w
+  const c = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? clamp(v, -lim, lim) : 0)
+  const one = (p?: { x: number; y: number }) => ({ x: c(p?.x), y: c(p?.y) })
+  return { corner: one(o?.corner), qr: one(o?.qr), name: one(o?.name), mid: one(o?.mid) }
+}

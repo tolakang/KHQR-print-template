@@ -11,7 +11,7 @@ function ViewSwitch() {
   const view = useUi((x) => x.view)
   const setView = useUi((x) => x.setView)
   return (
-    <div className="inline-flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5" role="radiogroup" aria-label="Layout">
+    <div className="inline-flex h-9 items-center gap-1 rounded-[10px] bg-stone-100 p-1 ring-1 ring-inset ring-stone-200/70" role="radiogroup" aria-label="Layout">
       {(['cards', 'flow'] as const).map((v) => (
         <button
           key={v}
@@ -19,7 +19,7 @@ function ViewSwitch() {
           role="radio"
           aria-checked={view === v}
           onClick={() => setView(v)}
-          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition sm:px-3 ${view === v ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
+          className={`h-7 rounded-md px-2.5 text-xs font-semibold transition sm:px-3 ${view === v ? 'bg-white text-brand shadow-[0_1px_2px_rgba(28,25,23,0.10)] ring-1 ring-black/[0.04]' : 'text-stone-500 hover:text-stone-900'}`}
         >
           {v === 'cards' ? 'Cards' : 'Flow'}
         </button>
@@ -39,14 +39,14 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-stone-900 md:h-screen">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-stone-200 bg-white/95 px-4 py-2.5 backdrop-blur md:static md:px-5">
-        <div className="flex min-w-0 items-center gap-2.5">
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-stone-200/80 bg-white/90 px-4 backdrop-blur-md md:static md:h-16 md:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           <img src="/artwork/khqr-logo.svg" alt="KHQR" className="h-6 w-auto shrink-0 sm:h-7" />
-          <div className="hidden min-w-0 border-l border-stone-200 pl-2.5 sm:block">
-            <h1 className="truncate text-sm font-bold leading-tight tracking-tight sm:text-[15px]">Roll Sticker</h1>
-            <p className="hidden text-xs leading-tight text-stone-500 sm:block">Vector PDF generator</p>
+          <div className="hidden min-w-0 border-l border-stone-200 pl-3 sm:block">
+            <h1 className="truncate text-sm font-semibold leading-tight tracking-tight text-stone-900">Roll Sticker</h1>
+            <p className="text-xs leading-tight text-stone-500">Vector PDF generator</p>
           </div>
-          <span className="ml-2 hidden items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800 lg:inline-flex">
+          <span className="ml-1 hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200/80 lg:inline-flex">
             <Shield className="h-3.5 w-3.5" /> Runs in your browser · nothing is uploaded
           </span>
         </div>
@@ -62,25 +62,23 @@ export default function App() {
         </div>
       )}
       {flow ? (
-        <div className="h-[calc(100dvh-57px)] md:h-auto md:min-h-0 md:flex-1">
+        <div className="h-[calc(100dvh-56px)] md:h-auto md:min-h-0 md:flex-1">
           <FlowView />
         </div>
       ) : (
       /* Phones: preview first, then settings, then the rows table. Desktop: settings on the left. */
-      <div className="flex flex-col md:grid md:min-h-0 md:flex-1 md:grid-cols-[384px_minmax(0,1fr)] md:grid-rows-[minmax(0,3fr)_minmax(220px,1.3fr)]">
-        <main className="order-1 h-[72vh] min-h-0 md:order-none md:col-start-2 md:row-start-1 md:h-auto">
+      <div className="flex flex-col gap-4 p-4 md:grid md:min-h-0 md:flex-1 md:grid-cols-[392px_minmax(0,1fr)] md:grid-rows-[minmax(0,3fr)_minmax(220px,1.3fr)] md:gap-5 md:p-5">
+        <main className="card order-1 h-[72vh] min-h-0 overflow-hidden md:order-none md:col-start-2 md:row-start-1 md:h-auto">
           <Preview />
         </main>
-        <aside className="order-2 flex flex-col gap-3 p-4 sm:p-6 md:order-none md:col-start-1 md:row-span-2 md:row-start-1 md:min-h-0 md:pr-3">
+        <aside className="order-2 flex flex-col gap-3 md:order-none md:col-start-1 md:row-span-2 md:row-start-1 md:min-h-0">
           <SettingsTabs />
           <p className="shrink-0 px-1 text-[11px] leading-snug text-stone-400">
             Fonts are SIL Open Font License (Nunito Sans, Nokora and the other name fonts). Output PDFs contain vector paths only: no fonts, no images.
           </p>
         </aside>
-        <section className="order-3 max-h-[70vh] min-h-[240px] px-4 pb-4 sm:px-6 sm:pb-6 md:order-none md:col-start-2 md:row-start-2 md:max-h-none md:min-h-0 md:pl-3">
-          <div className="h-full overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.10)]">
-            <RowsTable />
-          </div>
+        <section className="card order-3 max-h-[70vh] min-h-[240px] overflow-hidden md:order-none md:col-start-2 md:row-start-2 md:max-h-none md:min-h-0">
+          <RowsTable />
         </section>
       </div>
       )}

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type ViewMode = 'cards' | 'flow'
-export type SettingsTab = 'assets' | 'data' | 'typography' | 'export'
+export type SettingsTab = 'assets' | 'data' | 'typography' | 'position' | 'export'
 
 interface UiState {
   view: ViewMode

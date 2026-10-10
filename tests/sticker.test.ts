@@ -83,6 +83,29 @@ describe('sticker matches the guide image (KH guide, 317.5 × 427.5 pt terms)', 
   })
 })
 
+describe('position offsets', () => {
+  const box = (r: ReturnType<typeof compose>, role: string, dark = false) => inkBBox(r.items.filter((_, k) => r.roles[k] === role), dark)!
+  const shifted = (offsets: Parameters<typeof composeSticker>[2]['offsets']) =>
+    composeSticker({ name: 'HELLO', mid: '124092620291906', qr, logo, corner }, sf, { ...defaultStickerOptions(), offsets })
+  const zero = { x: 0, y: 0 }
+  it('moves each element by its own offset only', () => {
+    const base = compose('HELLO')
+    const r = shifted({ corner: { x: 5, y: -3 }, qr: { x: -7, y: 4 }, name: { x: 2, y: 6 }, mid: { x: -4, y: 1.5 } })
+    for (const [role, d, dark] of [['corner', { x: 5, y: -3 }, false], ['qr', { x: -7, y: 4 }, true], ['logo', { x: -7, y: 4 }, false], ['name', { x: 2, y: 6 }, false]] as const) {
+      expect(box(r, role, dark).x1 - box(base, role, dark).x1).toBeCloseTo(d.x, 3)
+      expect(box(r, role, dark).y1 - box(base, role, dark).y1).toBeCloseTo(d.y, 3)
+    }
+    // MID follows the name (default "follow"), plus its own offset.
+    expect(box(r, 'mid').x1 - box(base, 'mid').x1).toBeCloseTo(-4, 3)
+    expect(box(r, 'mid').y1 - box(base, 'mid').y1).toBeCloseTo(6 + 1.5, 3)
+    expect(r.warnings.find((w) => w.code === 'off-page')).toBeUndefined()
+  })
+  it('warns when an element is moved past the sticker edge', () => {
+    const r = shifted({ corner: zero, qr: { x: 200, y: 0 }, name: zero, mid: zero })
+    expect(r.warnings.find((w) => w.code === 'off-page')?.message).toContain('QR')
+  })
+})
+
 describe('export geometry', () => {
   it('A6 no bleed = 297.64 × 419.53', () => {
     const g = pageGeometry({ ...defaultExportOptions(), pageSize: 'A6' })

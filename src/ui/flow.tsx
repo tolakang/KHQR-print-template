@@ -11,13 +11,13 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useUi } from '../store/ui'
-import { AssetsPanel, DataPanel, TypographyPanel, ExportPanel } from './panels'
+import { AssetsPanel, DataPanel, TypographyPanel, PositionPanel, ExportPanel } from './panels'
 import { Preview, RowsTable } from './preview'
-import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset, Download as DownloadIcon } from './icons'
+import { Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset, Move, Download as DownloadIcon } from './icons'
 import { ExportBar } from './exportBar'
 import { btnCls } from './controls'
 
-type Kind = 'assets' | 'data' | 'typography' | 'export' | 'preview' | 'download' | 'rows'
+type Kind = 'assets' | 'data' | 'typography' | 'position' | 'export' | 'preview' | 'download' | 'rows'
 type FlowNodeData = { kind: Kind }
 
 const DEFAULT_LAYOUT: Record<Kind, { x: number; y: number }> = {
@@ -25,6 +25,7 @@ const DEFAULT_LAYOUT: Record<Kind, { x: number; y: number }> = {
   export: { x: 0, y: 900 },
   data: { x: 420, y: 0 },
   typography: { x: 420, y: 1080 },
+  position: { x: 420, y: 1200 },
   preview: { x: 900, y: 0 },
   download: { x: 1540, y: 0 },
   rows: { x: 900, y: 820 },
@@ -36,7 +37,7 @@ const DEFAULT_LAYOUT: Record<Kind, { x: number; y: number }> = {
  */
 interface Port { id: string; top: string }
 const INPUTS: Partial<Record<Kind, Port[]>> = {
-  preview: [{ id: 'assets', top: '16%' }, { id: 'data', top: '27%' }, { id: 'typography', top: '38%' }, { id: 'export', top: '49%' }],
+  preview: [{ id: 'assets', top: '16%' }, { id: 'data', top: '27%' }, { id: 'typography', top: '38%' }, { id: 'position', top: '44%' }, { id: 'export', top: '50%' }],
   download: [{ id: 'preview', top: '56px' }],
   rows: [{ id: 'data', top: '50%' }],
 }
@@ -48,12 +49,13 @@ const OUTPUTS: Partial<Record<Kind, Port[]>> = {
   export: [{ id: 'preview', top: `${HEADER}px` }],
   data: [{ id: 'preview', top: `${HEADER - 9}px` }, { id: 'rows', top: `${HEADER + 9}px` }],
   typography: [{ id: 'preview', top: `${HEADER}px` }],
+  position: [{ id: 'preview', top: `${HEADER}px` }],
   preview: [{ id: 'download', top: `${HEADER}px` }],
 }
 
 // Settings (assets, data, typography, export) feed the Preview; the Preview feeds Download.
 const EDGES: Edge[] = [
-  ['assets', 'preview'], ['data', 'preview'], ['typography', 'preview'], ['export', 'preview'], ['preview', 'download'], ['data', 'rows'],
+  ['assets', 'preview'], ['data', 'preview'], ['typography', 'preview'], ['position', 'preview'], ['export', 'preview'], ['preview', 'download'], ['data', 'rows'],
 ].map(([source, target]) => ({
   id: `${source}-${target}`,
   source,
@@ -61,7 +63,7 @@ const EDGES: Edge[] = [
   sourceHandle: `out-${target}`,
   targetHandle: `in-${source}`,
   animated: true,
-  style: { stroke: '#b1b1b7', strokeWidth: 1 },
+  style: { stroke: '#8f8f99', strokeWidth: 1.5 },
 }))
 
 const handleCls = '!h-2.5 !w-2.5 !border !border-white !bg-brand'
@@ -87,6 +89,7 @@ function FlowNode({ data }: NodeProps<Node<FlowNodeData>>) {
     case 'assets': body = <div className="w-[360px]"><Grip icon={<ImageIcon className="h-3.5 w-3.5" />} title="Assets" /><AssetsPanel /></div>; break
     case 'data': body = <div className="w-[360px]"><Grip icon={<TableIcon className="h-3.5 w-3.5" />} title="Data" /><DataPanel /></div>; break
     case 'typography': body = <div className="w-[360px]"><Grip icon={<TypeIcon className="h-3.5 w-3.5" />} title="Typography" /><TypographyPanel /></div>; break
+    case 'position': body = <div className="w-[360px]"><Grip icon={<Move className="h-3.5 w-3.5" />} title="Position" /><PositionPanel /></div>; break
     case 'export': body = <div className="w-[360px]"><Grip icon={<FileOut className="h-3.5 w-3.5" />} title="Export" /><ExportPanel /></div>; break
     case 'preview':
       body = (
