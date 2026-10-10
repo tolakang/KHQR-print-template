@@ -11,7 +11,12 @@ export const UNIT_STEP: Record<Unit, number> = { mm: 0.5, pt: 1, px: 1 }
 
 export const ptTo = (pt: number, u: Unit) => pt / PT_PER[u]
 export const toPt = (v: number, u: Unit) => v * PT_PER[u]
-/** Two decimals, no trailing zeros. */
+/**
+ * The exact converted value: full double precision (15 significant digits), which only drops
+ * floating-point noise (3.0000000000000004 → 3), never a real digit.
+ */
+export const exact = (v: number) => Number(v.toPrecision(15))
+/** Shown numbers: at most two decimals, only when needed (23, 3.5, 8.11). Stored values stay exact. */
 export const round2 = (v: number) => Math.round(v * 100) / 100
-/** "12.5 mm" from a length in pt. */
-export const fmtLen = (pt: number, u: Unit, digits = 2) => `${Number(ptTo(pt, u).toFixed(digits))} ${u}`
+/** "8.11 mm" from a length in pt. */
+export const fmtLen = (pt: number, u: Unit) => `${round2(ptTo(pt, u))} ${u}`

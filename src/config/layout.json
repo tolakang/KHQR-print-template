@@ -1,11 +1,11 @@
 {
   "artboard": {
-    "w": 297.6378,
-    "h": 419.5276
+    "w": 297.637795275591,
+    "h": 419.527559055118
   },
   "corner": {
     "size": 154.3,
-    "x": 71.6689,
+    "x": 71.6688976377955,
     "y": 98,
     "stroke": 2.7,
     "arm": 37.02,
@@ -14,12 +14,12 @@
   },
   "qr": {
     "size": 134,
-    "x": 81.8189,
+    "x": 81.8188976377955,
     "y": 107.6
   },
   "logo": {
     "size": 32,
-    "x": 132.8189,
+    "x": 132.818897637795,
     "y": 158.6
   },
   "name": {
@@ -33,27 +33,27 @@
     "prefix": "MID: ",
     "position": "follow"
   },
-  "safeMarginPt": 9.9213,
+  "safeMarginPt": 9.92125984251969,
   "pageSizesPt": {
     "A3": [
-      841.8898,
-      1190.5512
+      841.889763779528,
+      1190.55118110236
     ],
     "A4": [
-      595.2756,
-      841.8898
+      595.275590551181,
+      841.889763779528
     ],
     "A5": [
-      419.5276,
-      595.2756
+      419.527559055118,
+      595.275590551181
     ],
     "A6": [
-      297.6378,
-      419.5276
+      297.637795275591,
+      419.527559055118
     ],
     "A7": [
-      209.7638,
-      297.6378
+      209.763779527559,
+      297.637795275591
     ]
   },
   "bleedMm": 3,
@@ -62,10 +62,11 @@
     "minModuleMm": 0.4
   },
   "_notes": [
-    "Artboard = A6 exactly (105 x 148 mm = 297.6378 x 419.5276 pt; 1 pt = 25.4/72 mm). It is also the default page size.",
-    "Sizes and vertical distances are the guide image's exact values (guide drawn at 317.5 x 427.5 pt): corner frame 154.3 pt square, 98 pt from the top (stroke 2.7, arms 37.02, radius 13.25); QR 134 pt, 107.6 pt from the top; logo 32 pt centred on the QR; merchant name 23 pt, cap top 38 pt below the QR; MID 10 pt, cap top 22 pt below the last name baseline; text side safe margin 3.5 mm = 9.9213 pt (guide safe width 277.5 pt, rounded to a whole half-millimetre).",
+    "Artboard = A6 exactly (105 x 148 mm = 297.637795275591 x 419.527559055118 pt; 1 pt = 25.4/72 mm). It is also the default page size.",
+    "Sizes and vertical distances are the guide image's exact values (guide drawn at 317.5 x 427.5 pt): corner frame 154.3 pt square, 98 pt from the top (stroke 2.7, arms 37.02, radius 13.25); QR 134 pt, 107.6 pt from the top; logo 32 pt centred on the QR; merchant name 23 pt, cap top 38 pt below the QR; MID 10 pt, cap top 22 pt below the last name baseline; text side safe margin 3.5 mm = 9.92125984251969 pt (guide safe width 277.5 pt, rounded to a whole half-millimetre).",
     "Everything is centred horizontally on the A6 width (side margins: QR 81.82, frame 71.67). A6 is 7.97 pt shorter than the guide drawing, so the name baseline lands ~122 pt above the bottom instead of the guide's 130.",
     "The guide's frame (98) is 0.55 pt lower than concentric with the QR (97.45); the guide value is used.",
-    "Name line pitch = cap height + lineGap (11.8 pt)."
+    "Name line pitch = cap height + lineGap (11.8 pt).",
+    "All coordinates are exact (computed, 15 significant digits); nothing is rounded."
   ]
 }

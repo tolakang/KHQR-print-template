@@ -65,7 +65,7 @@ export const useSettings = create<SettingsState>()(
         if (p.cornerRadiusPt === 13.003) p.cornerRadiusPt = d.cornerRadiusPt
         if (p.nameSizePt === 22.571) p.nameSizePt = d.nameSizePt
         if (p.midSizePt === 9.814) p.midSizePt = d.midSizePt
-        if (p.safeMarginPt === 12.656 || p.safeMarginPt === 10.0689) p.safeMarginPt = d.safeMarginPt
+        if (p.safeMarginPt === 12.656 || p.safeMarginPt === 10.0689 || p.safeMarginPt === 9.9213) p.safeMarginPt = d.safeMarginPt
         // The position bar's own mm/pt switch became the app-wide unit.
         const old = (p as { positionUnit?: 'mm' | 'pt' }).positionUnit
         if (!p.unit && old) p.unit = old

@@ -89,8 +89,9 @@ export function NumberInput({ value, onChange, min, max, step = 1, suffix, disab
 }) {
   const [draft, setDraft] = useState<string | null>(null)
   const commit = (raw: string) => {
+    // Only a typed value is saved: leaving an untouched field must not store the rounded display.
     const v = parseFloat(raw)
-    if (Number.isFinite(v)) onChange(Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v)))
+    if (draft !== null && Number.isFinite(v)) onChange(Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v)))
     setDraft(null)
   }
   return (
@@ -98,7 +99,7 @@ export function NumberInput({ value, onChange, min, max, step = 1, suffix, disab
       <input
         type="number"
         inputMode="decimal"
-        className={inputCls + (suffix ? ' pr-9' : '')}
+        className={inputCls + (suffix ? ' pr-9' : '') + ((draft ?? String(value)).length > 9 ? ' !px-2 text-[12.5px] tracking-tight tabular-nums' : '')}
         value={draft ?? String(value)}
         min={min}
         max={max}
@@ -112,7 +113,7 @@ export function NumberInput({ value, onChange, min, max, step = 1, suffix, disab
         }}
         onBlur={(e) => commit(e.target.value)}
       />
-      {suffix && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-stone-400">{suffix}</span>}
+      {suffix && <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 bg-white pl-1 text-xs text-stone-400">{suffix}</span>}
     </div>
   )
 }

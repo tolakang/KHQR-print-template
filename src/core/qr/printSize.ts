@@ -18,12 +18,13 @@ const PT_TO_MM = 25.4 / 72
 export function qrPrintSize(stickerScale: number, modules?: number, L: Layout = defaultLayout): QrPrintSize {
   const qrMm = L.qr.size * stickerScale * PT_TO_MM
   const moduleMm = modules ? qrMm / modules : undefined
-  const fmt = (v: number, d = 1) => v.toFixed(d)
+  // At most two decimals, only when needed.
+  const fmt = (v: number) => Math.round(v * 100) / 100
   if (qrMm < L.scan.minQrMm) {
     return { qrMm, moduleMm, tooSmall: true, message: `QR prints at ${fmt(qrMm)} mm, under ${L.scan.minQrMm} mm: it may not scan. Use a larger page size and test-scan a print.` }
   }
   if (moduleMm !== undefined && moduleMm < L.scan.minModuleMm) {
-    return { qrMm, moduleMm, tooSmall: true, message: `QR modules print at ${fmt(moduleMm, 2)} mm (${modules} × ${modules}), under ${L.scan.minModuleMm} mm: it may not scan. Use a larger page size and test-scan a print.` }
+    return { qrMm, moduleMm, tooSmall: true, message: `QR modules print at ${fmt(moduleMm)} mm (${modules} × ${modules}), under ${L.scan.minModuleMm} mm: it may not scan. Use a larger page size and test-scan a print.` }
   }
   return { qrMm, moduleMm, tooSmall: false }
 }
