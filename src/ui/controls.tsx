@@ -1,6 +1,7 @@
 import { useContext, useRef, useState, type ReactNode } from 'react'
 import { PlainSection } from './sectionMode'
 import { useFileDrop } from './useFileDrop'
+import { useUnit } from './useUnit'
 import { ChevronDown } from './icons'
 
 /** A settings card. `action` sits in the header (e.g. a Reset button) and stays visible when collapsed. */
@@ -113,6 +114,29 @@ export function NumberInput({ value, onChange, min, max, step = 1, suffix, disab
       />
       {suffix && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-stone-400">{suffix}</span>}
     </div>
+  )
+}
+
+/**
+ * Length field: the value is stored in pt and shown in the app-wide unit (mm / pt / px).
+ * Limits are in pt too.
+ */
+export function LengthInput({ pt, onChange, minPt, maxPt, disabled, ariaLabel }: {
+  pt: number; onChange: (pt: number) => void; minPt?: number; maxPt?: number; disabled?: boolean; ariaLabel?: string
+}) {
+  const u = useUnit()
+  return (
+    <NumberInput
+      key={u.unit}
+      value={u.show(pt)}
+      onChange={(v) => onChange(u.parse(v))}
+      min={minPt === undefined ? undefined : u.show(minPt)}
+      max={maxPt === undefined ? undefined : u.show(maxPt)}
+      step={u.step}
+      suffix={u.unit}
+      disabled={disabled}
+      ariaLabel={ariaLabel}
+    />
   )
 }
 

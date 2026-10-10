@@ -33,7 +33,7 @@
     "prefix": "MID: ",
     "position": "follow"
   },
-  "safeMarginPt": 10.0689,
+  "safeMarginPt": 9.9213,
   "pageSizesPt": {
     "A3": [
       841.8898,
@@ -63,7 +63,7 @@
   },
   "_notes": [
     "Artboard = A6 exactly (105 x 148 mm = 297.6378 x 419.5276 pt; 1 pt = 25.4/72 mm). It is also the default page size.",
-    "Sizes and vertical distances are the guide image's exact values (guide drawn at 317.5 x 427.5 pt): corner frame 154.3 pt square, 98 pt from the top (stroke 2.7, arms 37.02, radius 13.25); QR 134 pt, 107.6 pt from the top; logo 32 pt centred on the QR; merchant name 23 pt, cap top 38 pt below the QR; MID 10 pt, cap top 22 pt below the last name baseline; text safe width 277.5 pt.",
+    "Sizes and vertical distances are the guide image's exact values (guide drawn at 317.5 x 427.5 pt): corner frame 154.3 pt square, 98 pt from the top (stroke 2.7, arms 37.02, radius 13.25); QR 134 pt, 107.6 pt from the top; logo 32 pt centred on the QR; merchant name 23 pt, cap top 38 pt below the QR; MID 10 pt, cap top 22 pt below the last name baseline; text side safe margin 3.5 mm = 9.9213 pt (guide safe width 277.5 pt, rounded to a whole half-millimetre).",
     "Everything is centred horizontally on the A6 width (side margins: QR 81.82, frame 71.67). A6 is 7.97 pt shorter than the guide drawing, so the name baseline lands ~122 pt above the bottom instead of the guide's 130.",
     "The guide's frame (98) is 0.55 pt lower than concentric with the QR (97.45); the guide value is used.",
     "Name line pitch = cap height + lineGap (11.8 pt)."

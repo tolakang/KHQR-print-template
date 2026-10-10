@@ -23,8 +23,8 @@ export interface Settings {
   cornerColor: string
   /** Position adjustments from the guide layout (pt). */
   offsets: Offsets
-  /** Unit the position fields are shown in (stored values are always pt). */
-  positionUnit: 'mm' | 'pt'
+  /** Unit every length field is shown in (stored values stay pt, or mm for bleed and page size). */
+  unit: 'mm' | 'pt' | 'px'
   /** Merchant-name font ids (see config/fonts.ts). */
   nameFontLatin: string
   nameFontKhmer: string

@@ -5,9 +5,10 @@ import type { AssetKind } from '../engine/types'
 import { pageGeometry, type PageSizeName } from '../core/layout/page'
 import { qrPrintSize } from '../core/qr/printSize'
 import { rowsInRange } from '../core/excel/read'
-import { layout, NAME_CHARS_MAX } from '../config'
+import { layout, mmToPt, NAME_CHARS_MAX } from '../config'
+import { useUnit } from './useUnit'
 import { NAME_FONTS, CUSTOM_FONT, type FontScript } from '../config/fonts'
-import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
+import { Section, Field, NumberInput, LengthInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
 import { useFileDrop } from './useFileDrop'
 import { PlainSection } from './sectionMode'
 import { ExportBar } from './exportBar'
@@ -50,6 +51,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
   const set = useSettings((x) => x.set)
   const resetAsset = useApp((x) => x.resetAsset)
   const max = layout.corner.arm
+  const u = useUnit()
   const color = s.cornerColor || (builtIn ? layout.corner.color : '#000000')
   const isDefault = builtIn && s.cornerRadiusPt === layout.corner.radius && !s.cornerColor
   const resetFrame = () => {
@@ -67,7 +69,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
       <div className={builtIn ? '' : 'opacity-50'}>
         <div className="mb-1.5 flex items-center justify-between">
           <span className="text-xs font-medium text-stone-700">Corner radius</span>
-          <button type="button" className={btnCls('ghost')} disabled={!builtIn || s.cornerRadiusPt === layout.corner.radius} onClick={() => set({ cornerRadiusPt: layout.corner.radius })}>Guide ({layout.corner.radius} pt)</button>
+          <button type="button" className={btnCls('ghost')} disabled={!builtIn || s.cornerRadiusPt === layout.corner.radius} onClick={() => set({ cornerRadiusPt: layout.corner.radius })}>Guide ({u.fmt(layout.corner.radius)})</button>
         </div>
         <div className="flex items-center gap-3">
           <input
@@ -81,7 +83,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
             className="h-1.5 flex-1 cursor-pointer accent-brand disabled:cursor-not-allowed"
             aria-label="Corner radius"
           />
-          <div className="w-28"><NumberInput value={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} min={0} max={max} step={0.25} suffix="pt" disabled={!builtIn} /></div>
+          <div className="w-28"><LengthInput pt={s.cornerRadiusPt} onChange={(v) => set({ cornerRadiusPt: v })} minPt={0} maxPt={max} disabled={!builtIn} ariaLabel="Corner radius value" /></div>
         </div>
         {!builtIn && <p className="mt-1 text-[11px] text-stone-500">Radius works with the built-in frame; an uploaded frame keeps its own shape.</p>}
       </div>
@@ -369,7 +371,7 @@ export function TypographyPanel() {
         <Field label="Name chars (max)"><NumberInput value={s.limits.nameChars} onChange={(v) => set({ limits: { ...s.limits, nameChars: Math.round(v) } })} min={1} max={NAME_CHARS_MAX} /></Field>
         <Field label="Name lines (max)"><NumberInput value={s.limits.nameLines} onChange={(v) => set({ limits: { ...s.limits, nameLines: Math.round(v) } })} min={1} max={4} /></Field>
         <Field label="MID max chars"><NumberInput value={s.limits.mid} onChange={(v) => set({ limits: { ...s.limits, mid: Math.round(v) } })} min={1} max={64} /></Field>
-        <Field label="Side safe margin"><NumberInput value={s.safeMarginPt} onChange={(v) => set({ safeMarginPt: v })} min={0} max={100} step={0.5} suffix="pt" /></Field>
+        <Field label="Side safe margin"><LengthInput pt={s.safeMarginPt} onChange={(v) => set({ safeMarginPt: v })} minPt={0} maxPt={100} /></Field>
       </div>
       <Field label="MID position" group>
         <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
@@ -379,6 +381,9 @@ export function TypographyPanel() {
     </Section>
   )
 }
+
+/** Stored mm values keep 4 decimals so unit round trips stay clean. */
+const ptToMm = (pt: number) => Math.round((pt / mmToPt(1)) * 1e4) / 1e4
 
 const PAGE_SIZES: { value: PageSizeName; label: string }[] = [
   { value: 'A3', label: 'A3 (297 × 420 mm)' },
@@ -395,6 +400,7 @@ export function ExportPanel() {
   const engineOpts = { pageSize: s.pageSize, customMm: s.customMm, bleed: false, bleedMm: 0, cropMarks: false, edgeFill: 'auto' as const }
   const qrSize = qrPrintSize(pageGeometry(engineOpts).stickerScale)
   const inTabs = useContext(PlainSection)
+  const u = useUnit()
   return (
     <Section title="Export" icon={<FileOut className="h-4 w-4" />} description="Page size, bleed and how the PDF is delivered.">
       <Field label="Page size" hint="Artwork scales uniformly to fit, never stretched.">
@@ -402,14 +408,14 @@ export function ExportPanel() {
       </Field>
       {s.pageSize === 'custom' && (
         <div className="grid grid-cols-2 gap-2">
-          <Field label="Width"><NumberInput value={s.customMm.w} onChange={(v) => set({ customMm: { ...s.customMm, w: v } })} min={20} max={1000} suffix="mm" /></Field>
-          <Field label="Height"><NumberInput value={s.customMm.h} onChange={(v) => set({ customMm: { ...s.customMm, h: v } })} min={20} max={1000} suffix="mm" /></Field>
+          <Field label="Width"><LengthInput pt={mmToPt(s.customMm.w)} onChange={(v) => set({ customMm: { ...s.customMm, w: ptToMm(v) } })} minPt={mmToPt(20)} maxPt={mmToPt(1000)} /></Field>
+          <Field label="Height"><LengthInput pt={mmToPt(s.customMm.h)} onChange={(v) => set({ customMm: { ...s.customMm, h: ptToMm(v) } })} minPt={mmToPt(20)} maxPt={mmToPt(1000)} /></Field>
         </div>
       )}
       {qrSize.tooSmall ? (
         <Notice>{qrSize.message}</Notice>
       ) : (
-        <p className="text-[11px] leading-snug text-stone-500">QR prints at {qrSize.qrMm.toFixed(1)} mm.</p>
+        <p className="text-[11px] leading-snug text-stone-500">QR prints at {u.fmt(mmToPt(qrSize.qrMm), 1)}.</p>
       )}
       <Toggle
         checked={s.background}
@@ -423,14 +429,14 @@ export function ExportPanel() {
       {s.bleed && (
         <div className="subcard space-y-3">
           {!s.bleedPerSide ? (
-            <Field label="Bleed" hint="Default 3 mm. 0–10 mm.">
-              <NumberInput value={s.bleedMm} onChange={(v) => set({ bleedMm: v })} min={0} max={10} step={0.5} suffix="mm" />
+            <Field label="Bleed" hint={`Default ${u.fmt(mmToPt(3))}. 0–${u.fmt(mmToPt(10))}.`}>
+              <LengthInput pt={mmToPt(s.bleedMm)} onChange={(v) => set({ bleedMm: ptToMm(v) })} minPt={0} maxPt={mmToPt(10)} />
             </Field>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {(['top', 'right', 'bottom', 'left'] as const).map((k) => (
                 <Field key={k} label={k[0].toUpperCase() + k.slice(1)}>
-                  <NumberInput value={s.bleedSidesMm[k]} onChange={(v) => set({ bleedSidesMm: { ...s.bleedSidesMm, [k]: v } })} min={0} max={10} step={0.5} suffix="mm" />
+                  <LengthInput pt={mmToPt(s.bleedSidesMm[k])} onChange={(v) => set({ bleedSidesMm: { ...s.bleedSidesMm, [k]: ptToMm(v) } })} minPt={0} maxPt={mmToPt(10)} />
                 </Field>
               ))}
             </div>
