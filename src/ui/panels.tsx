@@ -374,7 +374,7 @@ export function TypographyPanel() {
       <Field label="MID position" group>
         <Segmented value={s.midPosition} onChange={(v) => set({ midPosition: v })} options={[{ value: 'follow', label: 'Follow name' }, { value: 'fixed', label: 'Fixed (2-line spot)' }]} />
       </Field>
-      <p className="text-[11px] leading-snug text-stone-500">The whole name is limited to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included); extra words are dropped and flagged. It wraps by whole word at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
+      <p className="text-[11px] leading-snug text-stone-500">The whole name is trimmed to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included), even mid-word; the cut part is flagged. Lines break between words at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
       <button type="button" className={`${btnCls('secondary')} w-full`} disabled={typographyIsGuide} onClick={resetTypography}><Reset className="h-4 w-4" />Reset to guide values</button>
     </Section>
   )

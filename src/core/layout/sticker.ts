@@ -126,8 +126,7 @@ export function composeSticker(
   const measure = (s: string) => outlineLine(s, nameFonts, opt.nameSizePt)
   const wrap = wrapName(input.name, opt.limits.nameChars, opt.limits.nameLines, (s) => measure(s).width <= safeW)
   if (!wrap.lines.length) warnings.push({ code: 'name-empty', message: 'Merchant name is empty.' })
-  if (wrap.dropped) warnings.push({ code: 'name-dropped', message: `Name too long; dropped: “${wrap.droppedText}”.` })
-  if (wrap.wordCut) warnings.push({ code: 'name-word-cut', message: `A word longer than ${opt.limits.nameChars} characters was cut.` })
+  if (wrap.dropped) warnings.push({ code: 'name-dropped', message: `Name trimmed; not printed: “${wrap.droppedText}”.` })
   if (wrap.tooWide) warnings.push({ code: 'name-too-wide', message: 'A word is wider than the safe area; reduce the name size.' })
 
   const capName = (fonts.nameLatin.capHeight / fonts.nameLatin.upem) * opt.nameSizePt
