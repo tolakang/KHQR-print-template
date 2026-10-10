@@ -7,13 +7,12 @@ export interface Layout {
   corner: { size: number; x: number; y: number; stroke: number; arm: number; radius: number; color: string }
   qr: { size: number; x: number; y: number }
   logo: { size: number; x: number; y: number }
-  name: { baselineY: number; lineGap: number; sizePt: number }
+  /** gapFromQr: QR bottom → cap top of the first name line (pt). */
+  name: { gapFromQr: number; lineGap: number; sizePt: number }
   mid: { gapFromName: number; sizePt: number; prefix: string; position: 'follow' | 'fixed' }
   safeMarginPt: number
   pageSizesPt: Record<string, [number, number]>
   bleedMm: number
-  /** How the A6 design was derived from the original 317.5 × 427.5 pt guide. */
-  designScale?: { from: { w: number; h: number }; factor: number }
   /** Below these printed sizes the QR may not scan reliably. */
   scan: { minQrMm: number; minModuleMm: number }
 }

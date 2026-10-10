@@ -8,7 +8,14 @@ describe('wrapName', () => {
   it('keeps short names on one line', () => {
     expect(wrapName('ABC Coffee')).toMatchObject({ lines: ['ABC Coffee'], dropped: false })
   })
-  it('limits the whole name to 25 chars by whole word', () => {
+  it('trims the whole name to exactly 25 characters, even inside a word', () => {
+    const r = wrapName('The Pizza Company Sihanoukville')
+    expect(r.lines.join(' ')).toBe('The Pizza Company Sihanou')
+    expect(r.wordCut).toBe(true)
+    expect(r.droppedText).toBe('kville')
+    expect(wrapName('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 24).lines).toEqual(['ABCDEFGHIJKLMNOPQRSTUVWX'])
+  })
+  it('a cut on a space drops the space', () => {
     const r = wrapName('Golden Dragon Restaurant and Karaoke Lounge')
     expect(r.lines).toEqual(['Golden Dragon Restaurant'])
     expect(r.dropped).toBe(true)

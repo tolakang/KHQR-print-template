@@ -6,9 +6,9 @@ const scaleOf = (pageSize: PageSizeName, customMm?: { w: number; h: number }) =>
   pageGeometry({ ...defaultExportOptions(), pageSize, customMm }).stickerScale
 
 describe('printed QR size', () => {
-  it('is 131.5 pt (46.4 mm) at A6, the design size', () => {
+  it('is 134 pt (47.27 mm) at A6, the design size', () => {
     const r = qrPrintSize(scaleOf('A6'))
-    expect(r.qrMm).toBeCloseTo(46.39, 1)
+    expect(r.qrMm).toBeCloseTo(47.27, 1)
     expect(r.tooSmall).toBe(false)
   })
   it('accepts A7 for a typical KHQR (version 8, 49 modules)', () => {

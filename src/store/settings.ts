@@ -61,6 +61,11 @@ export const useSettings = create<SettingsState>()(
         if (p.nameSizePt === 23) p.nameSizePt = d.nameSizePt
         if (p.midSizePt === 10) p.midSizePt = d.midSizePt
         if (p.safeMarginPt === 20) p.safeMarginPt = d.safeMarginPt
+        // Defaults of the scaled (×0.981) A6 design move to the guide's exact sizes.
+        if (p.cornerRadiusPt === 13.003) p.cornerRadiusPt = d.cornerRadiusPt
+        if (p.nameSizePt === 22.571) p.nameSizePt = d.nameSizePt
+        if (p.midSizePt === 9.814) p.midSizePt = d.midSizePt
+        if (p.safeMarginPt === 12.656) p.safeMarginPt = d.safeMarginPt
         if (p.pageSize === 'original') p.pageSize = 'A6'
         const offsets = { ...d.offsets, ...(p.offsets ?? {}) }
         return { ...current, s: { ...d, ...p, limits: lim, offsets } }

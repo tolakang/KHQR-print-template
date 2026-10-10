@@ -126,19 +126,16 @@ export function composeSticker(
   const measure = (s: string) => outlineLine(s, nameFonts, opt.nameSizePt)
   const wrap = wrapName(input.name, opt.limits.nameChars, opt.limits.nameLines, (s) => measure(s).width <= safeW)
   if (!wrap.lines.length) warnings.push({ code: 'name-empty', message: 'Merchant name is empty.' })
-  if (wrap.dropped) warnings.push({ code: 'name-dropped', message: `Name too long; dropped: “${wrap.droppedText}”.` })
-  if (wrap.wordCut) warnings.push({ code: 'name-word-cut', message: `A word longer than ${opt.limits.nameChars} characters was cut.` })
+  if (wrap.dropped) warnings.push({ code: 'name-dropped', message: `Name trimmed; not printed: “${wrap.droppedText}”.` })
   if (wrap.tooWide) warnings.push({ code: 'name-too-wide', message: 'A word is wider than the safe area; reduce the name size.' })
 
   const capName = (fonts.nameLatin.capHeight / fonts.nameLatin.upem) * opt.nameSizePt
-  // Keep the first baseline where the guide puts it for 23 pt; for other sizes
-  // keep the 38 pt QR-to-cap-top gap so larger text grows downward.
+  // Guide: the first line's cap top sits 38 pt below the QR, whatever the name size.
   const qrBottom = L.qr.y + L.qr.size
-  const guideCap = (fonts.nameLatin.capHeight / fonts.nameLatin.upem) * L.name.sizePt
-  const gapQrToCap = L.name.baselineY - guideCap - qrBottom
+  const firstBaseline = qrBottom + L.name.gapFromQr + capName
   // The name offset is applied to the guide position (not to the moved QR).
   const nameOff = off('name')
-  let baseline = qrBottom + gapQrToCap + capName + nameOff.y
+  let baseline = firstBaseline + nameOff.y
   for (const line of wrap.lines) {
     const o = measure(line)
     if (o.missingGlyphs) warnings.push({ code: 'name-glyph', message: `Some characters in “${line}” are not in the fonts.` })
@@ -150,7 +147,7 @@ export function composeSticker(
   // "Follow name": the MID moves with the name.
   const lastBaseline = wrap.lines.length
     ? baseline - (L.name.lineGap + capName)
-    : L.name.baselineY + nameOff.y
+    : firstBaseline + nameOff.y
 
   // MID.
   const mid = formatMid(input.mid, opt.limits.mid)
@@ -165,7 +162,7 @@ export function composeSticker(
     const o = outlineLine(midText, midFonts, opt.midSizePt)
     const capMid = (fonts.midLatin.capHeight / fonts.midLatin.upem) * opt.midSizePt
     const anchor = opt.midPosition === 'fixed'
-      ? L.name.baselineY + (opt.limits.nameLines - 1) * (L.name.lineGap + capName)
+      ? firstBaseline + (opt.limits.nameLines - 1) * (L.name.lineGap + capName)
       : lastBaseline
     const midOff = off('mid')
     const midBaseline = anchor + L.mid.gapFromName + capMid + midOff.y

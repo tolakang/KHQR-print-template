@@ -192,7 +192,7 @@ const cornerHtml = await page.locator('.preview-page').innerHTML()
 if (!cornerHtml.includes('#d22026')) throw new Error('corner color not applied')
 await page.screenshot({ path: join(out, '4g-corner.png') })
 await page.getByRole('button', { name: 'Reset to default' }).click()
-if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.003') throw new Error('corner reset failed')
+if (await page.getByLabel('Corner radius', { exact: true }).inputValue() !== '13.25') throw new Error('corner reset failed')
 console.log('corner controls ok')
 
 // Drag and drop an SVG onto the corner frame card

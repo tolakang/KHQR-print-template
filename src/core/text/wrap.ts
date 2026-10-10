@@ -5,8 +5,8 @@
  * - Breaks only between whole words (spaces, or ICU word boundaries for
  *   Khmer, which is usually written without spaces).
  * - The whole name is limited to `maxChars` (25: the KHQR merchant-name
- *   limit); whole words past it are dropped and reported. A first word longer
- *   than the limit is cut on a grapheme boundary.
+ *   limit), counted in characters with spaces; it is cut right after the last
+ *   allowed character, even inside a word, and the rest is reported.
  * - Lines break where the next word no longer fits the safe width; words past
  *   `maxLines` are dropped and reported.
  */
@@ -72,9 +72,9 @@ export function toUnits(text: string): Unit[] {
 
 export interface WrapResult {
   lines: string[]
-  /** True when words were dropped (name over the character limit, or more lines than allowed). */
+  /** True when text was dropped (name over the character limit, or more lines than allowed). */
   dropped: boolean
-  /** True when a single over-long word had to be cut mid-word. */
+  /** True when the character limit fell inside a word. */
   wordCut: boolean
   /** The text that did not make it onto the sticker. */
   droppedText: string
@@ -85,9 +85,8 @@ export interface WrapResult {
 const joinUnits = (units: Unit[]) => units.map((u, k) => (k > 0 && u.spaceBefore ? ' ' : '') + u.text).join('')
 
 /**
- * @param maxChars limit for the whole name (all lines, spaces between words
- *   included). Whole words past it are dropped; a first word longer than the
- *   limit is cut.
+ * @param maxChars limit for the whole name (all lines, spaces included); the
+ *   name is cut after that many characters.
  * @param fits optional width check (e.g. measured width <= safe width); a line
  *   breaks before the word that no longer fits.
  */
@@ -97,32 +96,21 @@ export function wrapName(
   maxLines = 2,
   fits: (line: string) => boolean = () => true,
 ): WrapResult {
-  const units = toUnits(normalizeName(raw))
-
-  // 1. Character limit for the whole name, by whole word.
-  const kept: Unit[] = []
-  let over: Unit[] = []
-  let total = 0
-  let wordCut = false
-  for (let i = 0; i < units.length; i++) {
-    const u = units[i]
-    const add = (kept.length && u.spaceBefore ? 1 : 0) + charCount(u.text)
-    if (total + add <= maxChars) {
-      kept.push(u)
-      total += add
-      continue
+  // 1. Character limit for the whole name: cut after exactly `maxChars` characters
+  //    (spaces included, zero-width breaks not counted), even inside a word.
+  const g = graphemes(normalizeName(raw))
+  let cut = g.length
+  for (let k = 0, n = 0; k < g.length; k++) {
+    if (g[k].replace(ZW, '') === '') continue
+    if (n === maxChars) {
+      cut = k
+      break
     }
-    if (!kept.length) {
-      // First word alone is over the limit: cut on a grapheme boundary.
-      const g = graphemes(u.text)
-      kept.push({ text: g.slice(0, maxChars).join(''), spaceBefore: false })
-      over = [{ text: g.slice(maxChars).join(''), spaceBefore: false }, ...units.slice(i + 1)]
-      wordCut = true
-    } else {
-      over = units.slice(i)
-    }
-    break
+    n++
   }
+  const kept = toUnits(g.slice(0, cut).join('').trimEnd())
+  const overText = g.slice(cut).join('').replace(ZW, '').trim()
+  const wordCut = cut < g.length && /\S/.test(g[cut - 1] ?? '') && /\S/.test(g[cut])
 
   // 2. Lines by width, max `maxLines`.
   const lines: string[] = []
@@ -145,7 +133,8 @@ export function wrapName(
   }
   if (cur) lines.push(cur)
 
-  const droppedText = joinUnits([...kept.slice(i), ...over])
+  const lineOver = joinUnits(kept.slice(i))
+  const droppedText = lineOver && overText ? lineOver + (wordCut ? '' : ' ') + overText : lineOver || overText
   return { lines, dropped: droppedText.length > 0, wordCut, droppedText, tooWide }
 }
 
