@@ -90,7 +90,7 @@ export function PositionBar() {
           <button type="button" className={btnCls('secondary', 'sm')} disabled={!moved(el.role)} onClick={() => set({ offsets: { ...s.offsets, [el.role]: { x: 0, y: 0 } } })} aria-label={`Reset ${el.label} position`}>
             <Reset className="h-3.5 w-3.5" />Reset
           </button>
-          <span className="min-w-0 flex-1 text-[11px] leading-snug text-stone-500 sm:basis-48">
+          <span className="min-w-0 basis-full text-[11px] leading-snug text-stone-500 sm:flex-1 sm:basis-48">
             From the guide position: + right / down, − left / up.{el.hint ? ` ${el.hint}` : ''}
           </span>
         </div>

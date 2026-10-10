@@ -92,7 +92,7 @@ function FlowNode({ data }: NodeProps<Node<FlowNodeData>>) {
       body = (
         <div className="w-[560px]">
           <Grip icon={<ImageIcon className="h-3.5 w-3.5" />} title="Preview" />
-          <div className={`${card} nowheel h-[740px] overflow-hidden bg-canvas`}><Preview /></div>
+          <div className={`${card} nowheel h-[740px] overflow-hidden bg-canvas`}><Preview fill /></div>
         </div>
       )
       break

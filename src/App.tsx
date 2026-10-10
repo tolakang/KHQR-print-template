@@ -68,7 +68,7 @@ export default function App() {
       ) : (
       /* Phones: preview first, then settings, then the rows table. Desktop: settings on the left. */
       <div className="flex flex-col gap-4 p-4 md:grid md:min-h-0 md:flex-1 md:grid-cols-[392px_minmax(0,1fr)] md:grid-rows-[minmax(0,3fr)_minmax(220px,1.3fr)] md:gap-5 md:p-5">
-        <main className="card order-1 h-[72vh] min-h-0 overflow-hidden md:order-none md:col-start-2 md:row-start-1 md:h-auto">
+        <main className="card order-1 min-h-0 overflow-hidden md:order-none md:col-start-2 md:row-start-1">
           <Preview />
         </main>
         <aside className="order-2 flex flex-col gap-3 md:order-none md:col-start-1 md:row-span-2 md:row-start-1 md:min-h-0">
