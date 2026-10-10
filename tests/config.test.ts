@@ -24,7 +24,7 @@ describe('layout guide numbers (A6 design)', () => {
     expect(layout.name.gapFromQr).toBe(38) // guide: 38 from the QR to the name
     expect(layout.mid.sizePt).toBe(10)
     expect(layout.mid.gapFromName).toBe(22) // guide: 22 baseline → MID
-    expect(layout.safeMarginPt).toBeCloseTo(3.5 * PT, 3) // 3.5 mm, rounded from the guide's 277.5 pt safe width
+    expect(layout.safeMarginPt).toBe(10) // rounded from the guide's 277.5 pt safe width
   })
   it('QR is centred', () => {
     expect(layout.qr.x * 2 + layout.qr.size).toBeCloseTo(layout.artboard.w, 2)
