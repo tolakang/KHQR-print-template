@@ -89,8 +89,9 @@ export function NumberInput({ value, onChange, min, max, step = 1, suffix, disab
 }) {
   const [draft, setDraft] = useState<string | null>(null)
   const commit = (raw: string) => {
+    // Only a typed value is saved: leaving an untouched field must not store the rounded display.
     const v = parseFloat(raw)
-    if (Number.isFinite(v)) onChange(Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v)))
+    if (draft !== null && Number.isFinite(v)) onChange(Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v)))
     setDraft(null)
   }
   return (
