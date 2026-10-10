@@ -187,11 +187,12 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
 }
 
 export function AssetsPanel() {
+  const u = useUnit()
   return (
     <Section title="Assets" icon={<ImageIcon className="h-4 w-4" />} description="Artwork placed on every sticker. Upload or drop an SVG to replace one.">
       <AssetSlot kind="background" label="Background" hint={`Fitted inside the trim with one uniform scale. Gaps and bleed are filled from the artwork's edge colors. Default: ${DEFAULT_ASSETS.background.name}.`} />
-      <AssetSlot kind="logo" label="Bakong logo" hint="Always scaled to 32 × 32 pt and centered on the QR." />
-      <AssetSlot kind="corner" label="Corner frame" hint="Scaled to 154.3 pt square around the QR." />
+      <AssetSlot kind="logo" label="Bakong logo" hint={`Always scaled to ${u.show(layout.logo.size)} × ${u.fmt(layout.logo.size)} and centered on the QR.`} />
+      <AssetSlot kind="corner" label="Corner frame" hint={`Scaled to ${u.fmt(layout.corner.size)} square around the QR.`} />
     </Section>
   )
 }
@@ -366,8 +367,8 @@ export function TypographyPanel() {
       <FontPicker script="khmer" />
       <p className="text-[11px] leading-snug text-stone-500">English letters, digits and symbols use the English font; Khmer letters use the Khmer font. MID: Nunito Sans Regular. All text is outlined in the PDF.</p>
       <div className="grid grid-cols-2 gap-2">
-        <Field label="Name size"><NumberInput value={s.nameSizePt} onChange={(v) => set({ nameSizePt: v })} min={6} max={60} step={0.5} suffix="pt" /></Field>
-        <Field label="MID size"><NumberInput value={s.midSizePt} onChange={(v) => set({ midSizePt: v })} min={4} max={30} step={0.5} suffix="pt" /></Field>
+        <Field label="Name size"><LengthInput pt={s.nameSizePt} onChange={(v) => set({ nameSizePt: v })} minPt={6} maxPt={60} ariaLabel="Name size" /></Field>
+        <Field label="MID size"><LengthInput pt={s.midSizePt} onChange={(v) => set({ midSizePt: v })} minPt={4} maxPt={30} ariaLabel="MID size" /></Field>
         <Field label="Name chars (max)"><NumberInput value={s.limits.nameChars} onChange={(v) => set({ limits: { ...s.limits, nameChars: Math.round(v) } })} min={1} max={NAME_CHARS_MAX} /></Field>
         <Field label="Name lines (max)"><NumberInput value={s.limits.nameLines} onChange={(v) => set({ limits: { ...s.limits, nameLines: Math.round(v) } })} min={1} max={4} /></Field>
         <Field label="MID max chars"><NumberInput value={s.limits.mid} onChange={(v) => set({ limits: { ...s.limits, mid: Math.round(v) } })} min={1} max={64} /></Field>
