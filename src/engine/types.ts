@@ -4,6 +4,12 @@ import type { Warning } from '../core/scene'
 
 export type AssetKind = 'background' | 'logo' | 'corner'
 
+/** Movable sticker elements. The Bakong logo stays centred on the QR and moves with it. */
+export type OffsetRole = 'corner' | 'qr' | 'name' | 'mid'
+/** Shift from the guide position in pt (x right, y down). */
+export interface Offset { x: number; y: number }
+export type Offsets = Record<OffsetRole, Offset>
+
 export interface Settings {
   nameSizePt: number
   midSizePt: number
@@ -15,6 +21,10 @@ export interface Settings {
   /** Corner frame: outer corner radius (pt) and color ('' = the artwork's own colors). */
   cornerRadiusPt: number
   cornerColor: string
+  /** Position adjustments from the guide layout (pt). */
+  offsets: Offsets
+  /** Unit the position fields are shown in (stored values are always pt). */
+  positionUnit: 'mm' | 'pt'
   /** Merchant-name font ids (see config/fonts.ts). */
   nameFontLatin: string
   nameFontKhmer: string

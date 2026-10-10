@@ -2,7 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { layout, limits, NAME_CHARS_MAX } from '../config'
 import { DEFAULT_NAME_FONT } from '../config/fonts'
-import type { Settings } from '../engine/types'
+import type { Offsets, Settings } from '../engine/types'
+
+export const zeroOffsets = (): Offsets => ({ corner: { x: 0, y: 0 }, qr: { x: 0, y: 0 }, name: { x: 0, y: 0 }, mid: { x: 0, y: 0 } })
 
 export const defaultSettings = (): Settings => ({
   nameSizePt: layout.name.sizePt,
@@ -14,6 +16,8 @@ export const defaultSettings = (): Settings => ({
   showLogo: true,
   cornerRadiusPt: layout.corner.radius,
   cornerColor: '',
+  offsets: zeroOffsets(),
+  positionUnit: 'mm',
   nameFontLatin: DEFAULT_NAME_FONT.latin,
   nameFontKhmer: DEFAULT_NAME_FONT.khmer,
   redrawRaster: true,
@@ -58,7 +62,8 @@ export const useSettings = create<SettingsState>()(
         if (p.midSizePt === 10) p.midSizePt = d.midSizePt
         if (p.safeMarginPt === 20) p.safeMarginPt = d.safeMarginPt
         if (p.pageSize === 'original') p.pageSize = 'A6'
-        return { ...current, s: { ...d, ...p, limits: lim } }
+        const offsets = { ...d.offsets, ...(p.offsets ?? {}) }
+        return { ...current, s: { ...d, ...p, limits: lim, offsets } }
       },
     },
   ),

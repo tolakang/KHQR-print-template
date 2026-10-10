@@ -6,6 +6,7 @@ import { layout as defaultLayout, limits as defaultLimits, type Layout, type Lim
 import { parsePathData, transformPath, type Path } from '../geom/path'
 import { translate } from '../geom/matrix'
 import type { Scene, SceneItem, Warning, RGB } from '../scene'
+import type { Offsets } from '../../engine/types'
 import { outlineLine, type LoadedFont } from '../text/outline'
 import { wrapName, formatMid } from '../text/wrap'
 import { inkBBox, bboxToRect, placeScene, type Rect } from './place'
@@ -25,7 +26,11 @@ export interface StickerOptions {
   textColor: RGB
   /** Draw the corner frame asset. */
   showCorner: boolean
+  /** Shift of each element from its guide position (pt, x right, y down). */
+  offsets?: Offsets
 }
+
+const NO_OFFSET = { x: 0, y: 0 }
 
 export const defaultStickerOptions = (l: Layout = defaultLayout): StickerOptions => ({
   nameSizePt: l.name.sizePt,
@@ -66,6 +71,15 @@ export function composeSticker(
   const roles: Role[] = []
   const warnings: Warning[] = []
   const W = L.artboard.w
+  const H = L.artboard.h
+  const off = (r: keyof Offsets) => opt.offsets?.[r] ?? NO_OFFSET
+  const moved = (b: { x: number; y: number; size: number }, r: keyof Offsets) => ({ ...b, x: b.x + off(r).x, y: b.y + off(r).y })
+  const qrBox = moved(L.qr, 'qr')
+  const offPage: string[] = []
+  const checkOnPage = (label: string, x1: number, y1: number, x2: number, y2: number) => {
+    const e = 0.01
+    if (x1 < -e || y1 < -e || x2 > W + e || y2 > H + e) offPage.push(label)
+  }
   const add = (role: Role, ...its: SceneItem[]) => {
     for (const it of its) {
       items.push(it)
@@ -76,7 +90,9 @@ export function composeSticker(
   // Corner frame (ink box → 154.3 pt square).
   if (input.corner && opt.showCorner) {
     const ink = inkBBox(input.corner.items)
-    if (ink) add('corner', ...placeScene(input.corner, bboxToRect(ink), sq(L.corner)).items)
+    const box = moved(L.corner, 'corner')
+    if (ink) add('corner', ...placeScene(input.corner, bboxToRect(ink), sq(box)).items)
+    checkOnPage('corner frame', box.x, box.y, box.x + box.size, box.y + box.size)
   }
 
   // QR: measured on its dark modules (quiet zone excluded) → 134 pt.
@@ -89,16 +105,18 @@ export function composeSticker(
     if (Math.abs(aspect - 1) > 0.02) {
       warnings.push({ code: 'qr-not-square', message: `QR is not square (${aspect.toFixed(2)}:1); fitted inside 134 × 134 pt.` })
     }
-    const placed = placeScene(input.qr, ref, sq(L.qr))
+    const placed = placeScene(input.qr, ref, sq(qrBox))
     // Drop white/near-white fills that fall outside the 134 pt box (quiet-zone backgrounds),
     // so the quiet zone never paints over the background or corner frame.
-    add('qr', ...placed.items.filter((it) => !(it.kind === 'fill' && isWhite(it.color) && outside(it, sq(L.qr)))))
+    add('qr', ...placed.items.filter((it) => !(it.kind === 'fill' && isWhite(it.color) && outside(it, sq(qrBox)))))
+    checkOnPage('QR', qrBox.x, qrBox.y, qrBox.x + qrBox.size, qrBox.y + qrBox.size)
   }
 
   // Logo: ink box → 32 pt, centered on the QR.
   if (input.logo) {
     const ink = inkBBox(input.logo.items)
-    if (ink) add('logo', ...placeScene(input.logo, bboxToRect(ink), sq(L.logo)).items)
+    // Follows the QR so it stays centred on it.
+    if (ink) add('logo', ...placeScene(input.logo, bboxToRect(ink), sq(moved(L.logo, 'qr'))).items)
     else warnings.push({ code: 'logo-empty', message: 'Logo file has nothing to draw.' })
   }
 
@@ -118,17 +136,21 @@ export function composeSticker(
   const qrBottom = L.qr.y + L.qr.size
   const guideCap = (fonts.nameLatin.capHeight / fonts.nameLatin.upem) * L.name.sizePt
   const gapQrToCap = L.name.baselineY - guideCap - qrBottom
-  let baseline = qrBottom + gapQrToCap + capName
+  // The name offset is applied to the guide position (not to the moved QR).
+  const nameOff = off('name')
+  let baseline = qrBottom + gapQrToCap + capName + nameOff.y
   for (const line of wrap.lines) {
     const o = measure(line)
     if (o.missingGlyphs) warnings.push({ code: 'name-glyph', message: `Some characters in “${line}” are not in the fonts.` })
-    const x = (W - o.width) / 2
+    const x = (W - o.width) / 2 + nameOff.x
     add('name', fill(transformPath(parsePathData(o.d), translate(x, baseline)), opt.textColor))
+    checkOnPage('merchant name', x, baseline - capName, x + o.width, baseline)
     baseline += L.name.lineGap + capName
   }
+  // "Follow name": the MID moves with the name.
   const lastBaseline = wrap.lines.length
     ? baseline - (L.name.lineGap + capName)
-    : L.name.baselineY
+    : L.name.baselineY + nameOff.y
 
   // MID.
   const mid = formatMid(input.mid, opt.limits.mid)
@@ -145,9 +167,16 @@ export function composeSticker(
     const anchor = opt.midPosition === 'fixed'
       ? L.name.baselineY + (opt.limits.nameLines - 1) * (L.name.lineGap + capName)
       : lastBaseline
-    const midBaseline = anchor + L.mid.gapFromName + capMid
+    const midOff = off('mid')
+    const midBaseline = anchor + L.mid.gapFromName + capMid + midOff.y
+    const midX = (W - o.width) / 2 + midOff.x
     if (o.width > safeW) warnings.push({ code: 'mid-too-wide', message: 'MID is wider than the safe area.' })
-    add('mid', fill(transformPath(parsePathData(o.d), translate((W - o.width) / 2, midBaseline)), opt.textColor))
+    add('mid', fill(transformPath(parsePathData(o.d), translate(midX, midBaseline)), opt.textColor))
+    checkOnPage('MID', midX, midBaseline - capMid, midX + o.width, midBaseline)
+  }
+  if (offPage.length) {
+    const list = [...new Set(offPage)].join(', ')
+    warnings.push({ code: 'off-page', message: `Moved past the sticker edge: ${list}. Check the position settings.` })
   }
 
   return { items, roles, warnings, nameLines: wrap.lines, midText }

@@ -81,7 +81,7 @@ await page.screenshot({ path: join(out, '1-start.png') })
 
 // Settings panel tabs (cards view)
 const tab = (name: string) => page.getByRole('tab', { name: new RegExp(`^${name}`) }).click()
-if ((await page.getByRole('tab').count()) !== 4) throw new Error('expected 4 settings tabs')
+if ((await page.getByRole('tab').count()) !== 5) throw new Error('expected 5 settings tabs')
 
 // Upload Excel + QR files
 await tab('Data')
@@ -100,14 +100,14 @@ await page.screenshot({ path: join(out, '3-khmer-row.png') })
 
 // Flow view: same panels as nodes on a canvas
 await page.getByRole('radio', { name: 'Flow' }).click()
-await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 8, null, { timeout: 15000 })
 await page.waitForSelector('.react-flow__node .preview-page svg', { timeout: 15000 })
 await page.waitForTimeout(800)
 await page.screenshot({ path: join(out, '3b-flow.png') })
-if (await page.locator('.react-flow__edge').count() !== 6) throw new Error('flow edges missing')
+if (await page.locator('.react-flow__edge').count() !== 7) throw new Error('flow edges missing')
 // Each wire has its own connection points: 6 wires → 6 outputs + 6 inputs.
 const handles = await page.locator('.react-flow__handle').count()
-if (handles !== 12) throw new Error(`expected 12 handles, got ${handles}`)
+if (handles !== 14) throw new Error(`expected 14 handles, got ${handles}`)
 // Download node builds the PDF too
 const [dlf] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.locator('.react-flow__node-panel').filter({ hasText: 'Builds the PDF' }).getByRole('button', { name: /^Download PDF/ }).click()])
 console.log('downloaded from flow node', dlf.suggestedFilename())
@@ -221,6 +221,24 @@ const khmerFont = await page.getByLabel('Merchant name font: Khmer').inputValue(
 if (khmerFont !== 'nokora-600') throw new Error(`typography reset failed: ${khmerFont}`)
 console.log('typography reset ok')
 
+// Position tab: move the QR 10 mm right (= 28.35 pt), switch units, reset
+await tab('Position')
+const htmlBefore = await page.locator('.preview-page').innerHTML()
+await page.getByLabel('QR code X').fill('10')
+await page.waitForFunction((h) => document.querySelector('.preview-page')!.innerHTML !== h, htmlBefore, { timeout: 10000 })
+await page.waitForTimeout(500)
+await page.screenshot({ path: join(out, '4h-position.png') })
+await page.getByRole('radio', { name: 'Points (pt)' }).click()
+if ((await page.getByLabel('QR code X').inputValue()) !== '28.35') throw new Error(`position unit switch: ${await page.getByLabel('QR code X').inputValue()}`)
+await page.getByLabel('Merchant name Y').fill('400')
+await page.getByLabel('Merchant name Y').blur()
+await page.waitForFunction(() => document.body.innerText.includes('Moved past the sticker edge'), null, { timeout: 10000 })
+await page.getByRole('tabpanel').getByRole('button', { name: 'Reset', exact: true }).click()
+if ((await page.getByLabel('QR code X').inputValue()) !== '0' || (await page.getByLabel('Merchant name Y').inputValue()) !== '0') throw new Error('position reset failed')
+await page.waitForFunction((h) => document.querySelector('.preview-page')!.innerHTML === h, htmlBefore, { timeout: 10000 })
+await page.getByRole('radio', { name: 'Millimetres (mm)' }).click()
+console.log('position ok')
+
 // Zoom, then drag the zoomed preview to move around
 await page.getByRole('button', { name: 'Zoom in' }).click()
 await page.getByRole('button', { name: 'Zoom in' }).click()
@@ -312,8 +330,10 @@ await page.waitForTimeout(400)
 await page.screenshot({ path: join(out, '5-mobile.png') })
 await tab('Export')
 await page.locator('aside').screenshot({ path: join(out, '5a-mobile-tabs.png') })
+await tab('Position')
+await page.locator('aside').screenshot({ path: join(out, '5c-mobile-position.png') })
 await page.getByRole('radio', { name: 'Flow' }).click()
-await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 7, null, { timeout: 15000 })
+await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 8, null, { timeout: 15000 })
 await page.waitForTimeout(600)
 await page.screenshot({ path: join(out, '5b-mobile-flow.png') })
 await page.getByRole('radio', { name: 'Cards' }).click()

@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO, WHITE_LOGO } from '../store/app'
-import { useSettings, defaultSettings } from '../store/settings'
-import type { AssetKind } from '../engine/types'
+import { useSettings, defaultSettings, zeroOffsets } from '../store/settings'
+import type { AssetKind, OffsetRole } from '../engine/types'
 import { pageGeometry, type PageSizeName } from '../core/layout/page'
 import { qrPrintSize } from '../core/qr/printSize'
 import { rowsInRange } from '../core/excel/read'
-import { layout, NAME_CHARS_MAX } from '../config'
+import { layout, mmToPt, NAME_CHARS_MAX } from '../config'
 import { NAME_FONTS, CUSTOM_FONT, type FontScript } from '../config/fonts'
 import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
 import { useFileDrop } from './useFileDrop'
-import { Eye, EyeOff, Upload, Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset } from './icons'
+import { Eye, EyeOff, Upload, Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset, Move } from './icons'
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 
@@ -374,6 +374,54 @@ export function TypographyPanel() {
       </Field>
       <p className="text-[11px] leading-snug text-stone-500">The whole name is limited to {s.limits.nameChars} characters (max {NAME_CHARS_MAX}, spaces included); extra words are dropped and flagged. It wraps by whole word at the safe width, max {s.limits.nameLines} lines. Text is never shrunk automatically.</p>
       <button type="button" className={`${btnCls('secondary')} w-full`} disabled={typographyIsGuide} onClick={resetTypography}><Reset className="h-4 w-4" />Reset to guide values</button>
+    </Section>
+  )
+}
+
+const POSITION_ROWS: { role: OffsetRole; label: string; hint?: string }[] = [
+  { role: 'corner', label: 'Corner frame' },
+  { role: 'qr', label: 'QR code', hint: 'The Bakong logo moves with the QR.' },
+  { role: 'name', label: 'Merchant name' },
+  { role: 'mid', label: 'MID', hint: 'With MID position “Follow name”, the MID also moves with the name.' },
+]
+
+/** Move the corner frame, QR, name and MID from their guide positions (mm or pt). */
+export function PositionPanel() {
+  const s = useSettings((x) => x.s)
+  const set = useSettings((x) => x.set)
+  const unit = s.positionUnit
+  const toUnit = (pt: number) => (unit === 'mm' ? Math.round((pt / mmToPt(1)) * 100) / 100 : Math.round(pt * 100) / 100)
+  const fromUnit = (v: number) => (unit === 'mm' ? mmToPt(v) : v)
+  const lim = toUnit(layout.artboard.w)
+  const isZero = (r: OffsetRole) => s.offsets[r].x === 0 && s.offsets[r].y === 0
+  const allZero = POSITION_ROWS.every((r) => isZero(r.role))
+  const setAxis = (r: OffsetRole, axis: 'x' | 'y', v: number) => set({ offsets: { ...s.offsets, [r]: { ...s.offsets[r], [axis]: fromUnit(v) } } })
+  const resetOne = (r: OffsetRole) => set({ offsets: { ...s.offsets, [r]: { x: 0, y: 0 } } })
+  const resetAll = () => set({ offsets: zeroOffsets() })
+  return (
+    <Section title="Position" icon={<Move className="h-4 w-4" />} defaultOpen={false} action={
+      <button type="button" className={btnCls('secondary', 'sm')} disabled={allZero} onClick={resetAll} title="Put every element back at its guide position">
+        <Reset className="h-3.5 w-3.5" />Reset
+      </button>
+    }>
+      <Field label="Unit" group>
+        <Segmented value={unit} onChange={(v) => set({ positionUnit: v })} options={[{ value: 'mm', label: 'Millimetres (mm)' }, { value: 'pt', label: 'Points (pt)' }]} />
+      </Field>
+      <p className="text-[11px] leading-snug text-stone-500">Shift from the guide position. X: + moves right, − left. Y: + moves down, − up. 1 mm = 2.835 pt.</p>
+      {POSITION_ROWS.map(({ role, label, hint }) => (
+        <div key={role} className="rounded-xl border border-stone-200 p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-stone-800">{label}</span>
+            <button type="button" className={btnCls('ghost')} disabled={isZero(role)} onClick={() => resetOne(role)} aria-label={`Reset ${label} position`}>Reset</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="X (→)"><NumberInput ariaLabel={`${label} X`} value={toUnit(s.offsets[role].x)} onChange={(v) => setAxis(role, 'x', v)} min={-lim} max={lim} step={unit === 'mm' ? 0.5 : 1} suffix={unit} /></Field>
+            <Field label="Y (↓)"><NumberInput ariaLabel={`${label} Y`} value={toUnit(s.offsets[role].y)} onChange={(v) => setAxis(role, 'y', v)} min={-lim} max={lim} step={unit === 'mm' ? 0.5 : 1} suffix={unit} /></Field>
+          </div>
+          {hint && <p className="mt-2 text-[11px] leading-snug text-stone-500">{hint}</p>}
+        </div>
+      ))}
+      <button type="button" className={`${btnCls('secondary')} w-full`} disabled={allZero} onClick={resetAll}><Reset className="h-4 w-4" />Reset all positions</button>
     </Section>
   )
 }

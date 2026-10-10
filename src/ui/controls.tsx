@@ -75,8 +75,8 @@ export function OptionalIntInput({ value, onChange, min, placeholder, ariaLabel 
   )
 }
 
-export function NumberInput({ value, onChange, min, max, step = 1, suffix, disabled }: {
-  value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; suffix?: string; disabled?: boolean
+export function NumberInput({ value, onChange, min, max, step = 1, suffix, disabled, ariaLabel }: {
+  value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; suffix?: string; disabled?: boolean; ariaLabel?: string
 }) {
   const [draft, setDraft] = useState<string | null>(null)
   const commit = (raw: string) => {
@@ -95,6 +95,7 @@ export function NumberInput({ value, onChange, min, max, step = 1, suffix, disab
         max={max}
         step={step}
         disabled={disabled}
+        aria-label={ariaLabel}
         onChange={(e) => {
           setDraft(e.target.value)
           const v = parseFloat(e.target.value)

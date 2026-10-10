@@ -28,4 +28,5 @@ export const Alert = (p: P) => <Icon {...p}><path d="M10.3 3.9 1.8 18a2 2 0 0 0 
 export const Check = (p: P) => <Icon {...p}><path d="M20 6 9 17l-5-5" /></Icon>
 export const Minus = (p: P) => <Icon {...p}><path d="M5 12h14" /></Icon>
 export const Plus = (p: P) => <Icon {...p}><path d="M12 5v14M5 12h14" /></Icon>
+export const Move = (p: P) => <Icon {...p}><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3M12 22l-3-3m3 3 3-3M2 12l3-3m-3 3 3 3M22 12l-3-3m3 3-3 3" /></Icon>
 export const Maximize = (p: P) => <Icon {...p}><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></Icon>
