@@ -4,6 +4,7 @@ import { useSettings } from '../store/settings'
 import { charCount, normalizeName } from '../core/text/wrap'
 import { engine } from '../engine/client'
 import type { PreviewResult, RowInput } from '../engine/types'
+import { PositionBar } from './positionBar'
 import { ChevronLeft, ChevronRight, Alert, Check, Minus, Plus, Maximize } from './icons'
 
 const PT_TO_MM = 25.4 / 72
@@ -168,6 +169,7 @@ export function Preview() {
         </div>
       </div>
       </div>
+      {ready && <PositionBar />}
       {/* Status: warnings for this sticker (left), page size and guide legend (right). */}
       {res && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-stone-200/70 bg-white px-3 py-2 text-xs">

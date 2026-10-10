@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { OffsetRole } from '../engine/types'
 
 export type ViewMode = 'cards' | 'flow'
-export type SettingsTab = 'assets' | 'data' | 'typography' | 'position' | 'export'
+export type SettingsTab = 'assets' | 'data' | 'typography' | 'export'
 
 interface UiState {
   view: ViewMode
@@ -10,6 +11,11 @@ interface UiState {
   positions: Record<string, { x: number; y: number }>
   /** Open tab of the settings panel (cards view). */
   settingsTab: SettingsTab
+  /** Element picked in the preview's position bar, and whether the bar is expanded. */
+  positionTab: OffsetRole
+  positionOpen: boolean
+  setPositionTab: (r: OffsetRole) => void
+  setPositionOpen: (v: boolean) => void
   setView: (v: ViewMode) => void
   setSettingsTab: (t: SettingsTab) => void
   setPosition: (id: string, p: { x: number; y: number }) => void
@@ -22,6 +28,10 @@ export const useUi = create<UiState>()(
       view: 'cards',
       positions: {},
       settingsTab: 'assets',
+      positionTab: 'qr',
+      positionOpen: true,
+      setPositionTab: (positionTab) => set({ positionTab }),
+      setPositionOpen: (positionOpen) => set({ positionOpen }),
       setView: (view) => set({ view }),
       setSettingsTab: (settingsTab) => set({ settingsTab }),
       setPosition: (id, p) => set((st) => ({ positions: { ...st.positions, [id]: p } })),
