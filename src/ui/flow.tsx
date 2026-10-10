@@ -63,7 +63,7 @@ const EDGES: Edge[] = [
   sourceHandle: `out-${target}`,
   targetHandle: `in-${source}`,
   animated: true,
-  style: { stroke: '#b1b1b7', strokeWidth: 1 },
+  style: { stroke: '#8f8f99', strokeWidth: 1.5 },
 }))
 
 const handleCls = '!h-2.5 !w-2.5 !border !border-white !bg-brand'

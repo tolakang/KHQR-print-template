@@ -10,7 +10,7 @@
 }
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Nokora UI', sans-serif;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Nokora UI', sans-serif;
   /* Brand red (#D22026) used for every button, selection and focus state. */
   --color-brand: #d22026;
   --color-brand-50: #fdf1f1;
@@ -26,4 +26,32 @@ html, body, #root { height: 100%; }
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Inter: straight-sided digits and a disambiguated l / I. */
+  font-feature-settings: 'cv05', 'cv08', 'ss03';
+}
+
+/* Top-level surface: the settings panel, preview and rows table. */
+@utility card {
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid rgb(28 25 23 / 0.07);
+  box-shadow: 0 1px 2px rgb(28 25 23 / 0.04), 0 6px 20px -8px rgb(28 25 23 / 0.10);
+}
+
+/* Group inside a card (an asset, a data step, a position row). */
+@utility subcard {
+  border-radius: 0.875rem;
+  border: 1px solid rgb(28 25 23 / 0.08);
+  background: #fafaf9;
+  padding: 0.875rem;
+}
+
+/* Small uppercase heading above a group of fields. */
+@utility eyebrow {
+  font-size: 11px;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #78716c;
 }

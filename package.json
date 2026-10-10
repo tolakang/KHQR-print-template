@@ -15,6 +15,7 @@
     "e2e": "npm run build && tsx tools/e2e.ts out/e2e"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
     "@xmldom/xmldom": "^0.9.12",
     "@xyflow/react": "^12.12.0",
     "fflate": "^0.8.3",

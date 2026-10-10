@@ -4,19 +4,25 @@ import { useFileDrop } from './useFileDrop'
 import { ChevronDown } from './icons'
 
 /** A settings card. `action` sits in the header (e.g. a Reset button) and stays visible when collapsed. */
-export function Section({ title, icon, children, defaultOpen = true, badge, action }: { title: string; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; badge?: ReactNode; action?: ReactNode }) {
+export function Section({ title, icon, children, defaultOpen = true, badge, action, description }: { title: string; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; badge?: ReactNode; action?: ReactNode; description?: string }) {
   const [open, setOpen] = useState(defaultOpen)
-  // In the tabbed panel the tab is the header; only the body (and its action) is shown.
+  // In the tabbed panel the tab replaces the card: a title row (with its action) then the body.
   if (useContext(PlainSection)) {
     return (
-      <div className="space-y-4">
-        {action && <div className="-mb-1 flex justify-end">{action}</div>}
+      <div className="space-y-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-[15px] font-semibold tracking-tight text-stone-900">{title}</h2>
+            {description && <p className="mt-0.5 text-xs leading-snug text-stone-500">{description}</p>}
+          </div>
+          {action && <div className="shrink-0">{action}</div>}
+        </div>
         {children}
       </div>
     )
   }
   return (
-    <section className="shrink-0 overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.10)]">
+    <section className="card shrink-0 overflow-hidden">
       <div className="relative">
         <button
           type="button"
@@ -41,7 +47,7 @@ export function Section({ title, icon, children, defaultOpen = true, badge, acti
 export function Field({ label, hint, children, group }: { label: string; hint?: ReactNode; children: ReactNode; group?: boolean }) {
   const inner = (
     <>
-      <span className="mb-1.5 block text-xs font-medium text-stone-700">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-stone-600">{label}</span>
       {children}
       {hint && <span className="mt-1.5 block text-[11px] leading-snug text-stone-500">{hint}</span>}
     </>
@@ -51,7 +57,9 @@ export function Field({ label, hint, children, group }: { label: string; hint?: 
 }
 
 const inputCls =
-  'w-full rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-sm text-stone-900 shadow-xs transition placeholder:text-stone-400 hover:border-stone-300 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/10 disabled:bg-stone-50 disabled:text-stone-400'
+  'h-9 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 shadow-[0_1px_1px_rgba(28,25,23,0.03)] transition placeholder:text-stone-400 hover:border-stone-300 focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/10 disabled:bg-stone-50 disabled:text-stone-400'
+
+const SELECT_CHEVRON = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#78716c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg>')}")`
 
 /** Whole-number input that may be left empty (null). */
 export function OptionalIntInput({ value, onChange, min, placeholder, ariaLabel }: {
@@ -113,7 +121,8 @@ export function Select<T extends string | number>({ value, onChange, options, di
 }) {
   return (
     <select
-      className={inputCls}
+      className={`${inputCls} cursor-pointer appearance-none bg-[length:16px_16px] bg-[position:right_10px_center] bg-no-repeat pr-9`}
+      style={{ backgroundImage: SELECT_CHEVRON }}
       value={String(value)}
       disabled={disabled}
       onChange={(e) => {
@@ -137,7 +146,7 @@ export function Toggle({ checked, onChange, label, hint, disabled }: { checked: 
         className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-stone-300 transition-colors peer-checked:bg-brand peer-focus-visible:ring-1 peer-focus-visible:ring-brand/20 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-4"
       />
       <span>
-        <span className="block text-sm font-medium text-stone-800">{label}</span>
+        <span className="block text-sm font-medium text-stone-900">{label}</span>
         {hint && <span className="mt-0.5 block text-[11px] leading-snug text-stone-500">{hint}</span>}
       </span>
     </label>
@@ -146,7 +155,7 @@ export function Toggle({ checked, onChange, label, hint, disabled }: { checked: 
 
 export function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
   return (
-    <div className="inline-flex w-full gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5" role="radiogroup">
+    <div className="inline-flex w-full gap-1 rounded-[10px] bg-stone-100 p-1 ring-1 ring-inset ring-stone-200/70" role="radiogroup">
       {options.map((o) => (
         <button
           key={o.value}
@@ -154,7 +163,7 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition ${value === o.value ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
+          className={`h-7 flex-1 rounded-md px-2 text-xs font-semibold transition ${value === o.value ? 'bg-brand text-white shadow-[0_1px_2px_rgba(210,32,38,0.3)]' : 'text-stone-600 hover:bg-white hover:text-stone-900'}`}
         >
           {o.label}
         </button>
@@ -192,18 +201,18 @@ export function DropZone({ onFiles, children, accept }: { onFiles: (f: File[]) =
   return (
     <div
       {...props}
-      className={`rounded-xl border border-dashed px-3 py-4 text-center text-xs transition-colors ${over ? 'border-brand bg-brand-50' : 'border-stone-200 bg-stone-50/70 hover:border-stone-300'}`}
+      className={`rounded-xl border border-dashed px-3 py-5 text-center text-xs transition-colors ${over ? 'border-brand bg-brand-50' : 'border-stone-300/80 bg-white hover:border-brand/50 hover:bg-brand-50/30'}`}
     >
       {children}
     </div>
   )
 }
 
-const btnBase = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand/20 disabled:cursor-not-allowed'
+const btnBase = 'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand/20 disabled:cursor-not-allowed'
 export const btnCls = (variant: 'primary' | 'secondary' | 'ghost' = 'secondary', size: 'md' | 'sm' = 'md') =>
   ({
-    primary: `${btnBase} ${size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2 text-sm'} bg-brand text-white shadow-sm shadow-brand/20 hover:bg-brand-600 active:bg-brand-700 disabled:bg-stone-300 disabled:shadow-none`,
-    secondary: `${btnBase} ${size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2 text-sm'} border border-brand/40 bg-white text-brand shadow-xs hover:border-brand hover:bg-brand-50 active:bg-brand-100 disabled:opacity-50`,
+    primary: `${btnBase} ${size === 'sm' ? 'h-8 px-3 text-xs' : 'h-9 px-4 text-sm'} bg-brand text-white shadow-[0_1px_2px_rgba(210,32,38,0.25),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-brand-600 active:bg-brand-700 disabled:bg-stone-300 disabled:shadow-none`,
+    secondary: `${btnBase} ${size === 'sm' ? 'h-8 px-3 text-xs' : 'h-9 px-4 text-sm'} border border-brand/35 bg-white text-brand shadow-[0_1px_1px_rgba(28,25,23,0.03)] hover:border-brand hover:bg-brand-50 active:bg-brand-100 disabled:opacity-50`,
     ghost: `${btnBase} px-2 py-1 text-xs text-brand hover:bg-brand-50 active:bg-brand-100 disabled:opacity-40`,
   })[variant]
 
@@ -214,5 +223,5 @@ export function Notice({ tone = 'warn', children }: { tone?: 'warn' | 'error' | 
     ok: 'border-emerald-200 bg-emerald-50 text-emerald-900',
     info: 'border-sky-200 bg-sky-50 text-sky-900',
   }[tone]
-  return <div className={`rounded-lg border px-3 py-2 text-xs leading-snug ${c}`}>{children}</div>
+  return <div className={`rounded-lg border px-3 py-2.5 text-xs leading-snug ${c}`}>{children}</div>
 }

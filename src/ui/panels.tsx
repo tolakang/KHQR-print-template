@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
 import { useApp, deriveRows, DEFAULT_ASSETS, RED_LOGO, WHITE_LOGO } from '../store/app'
 import { useSettings, defaultSettings, zeroOffsets } from '../store/settings'
 import type { AssetKind, OffsetRole } from '../engine/types'
@@ -9,6 +9,8 @@ import { layout, mmToPt, NAME_CHARS_MAX } from '../config'
 import { NAME_FONTS, CUSTOM_FONT, type FontScript } from '../config/fonts'
 import { Section, Field, NumberInput, OptionalIntInput, Select, Toggle, Segmented, FileButton, DropZone, Notice, btnCls } from './controls'
 import { useFileDrop } from './useFileDrop'
+import { PlainSection } from './sectionMode'
+import { ExportBar } from './exportBar'
 import { Eye, EyeOff, Upload, Image as ImageIcon, Table as TableIcon, Type as TypeIcon, FileOut, Reset, Move } from './icons'
 
 const svgThumb = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
@@ -37,7 +39,7 @@ function HexInput({ value, onChange }: { value: string; onChange: (v: string) =>
         if (/^#?[0-9a-f]{6}$/i.test(v)) onChange(('#' + v.replace('#', '')).toLowerCase())
       }}
       onBlur={() => setDraft(null)}
-      className="w-24 rounded-lg border border-stone-200 px-2.5 py-2 font-mono text-xs uppercase text-stone-700 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/10"
+      className="h-9 w-24 rounded-lg border border-stone-200 bg-white px-2.5 font-mono text-xs uppercase text-stone-700 focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/10"
       aria-label="Corner color hex"
     />
   )
@@ -55,7 +57,7 @@ function CornerControls({ builtIn }: { builtIn: boolean }) {
     if (!builtIn) resetAsset('corner')
   }
   return (
-    <div className="mt-3 space-y-3 border-t border-stone-100 pt-3">
+    <div className="mt-3 space-y-3 border-t border-stone-200/70 pt-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-stone-800">Frame style</span>
         <button type="button" className={btnCls('secondary', 'sm')} disabled={isDefault} onClick={resetFrame} title="Built-in frame, guide radius and guide color">
@@ -113,7 +115,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
   return (
     <div
       {...drop.props}
-      className={`relative rounded-xl border bg-white p-3 transition-colors ${drop.over ? 'border border-dashed border-brand bg-brand-50' : visible ? 'border-stone-200' : 'border-dashed border-stone-300 bg-stone-50/60'}`}
+      className={`subcard relative transition-colors ${drop.over ? '!border-dashed !border-brand !bg-brand-50' : visible ? '' : '!border-dashed !border-stone-300 !bg-stone-100/60'}`}
     >
       {drop.over && (
         <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-xl bg-brand-50/90 text-sm font-semibold text-brand">
@@ -121,7 +123,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
         </div>
       )}
       <div className="flex gap-3">
-        <div className={`grid h-16 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-stone-200 bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px] p-1 transition-opacity ${visible ? '' : 'opacity-30 grayscale'}`}>
+        <div className={`grid h-16 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-stone-200 bg-white bg-[repeating-conic-gradient(#f5f5f4_0_25%,#fff_0_50%)] bg-[length:10px_10px] p-1 transition-opacity ${visible ? '' : 'opacity-30 grayscale'}`}>
           {a && <img src={svgThumb(a.svg)} alt="" className="max-h-full max-w-full" />}
         </div>
         <div className="min-w-0 flex-1">
@@ -132,7 +134,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
             </div>
             <button
               type="button"
-              className={`${btnCls(visible ? 'secondary' : 'primary', 'sm')} !gap-1 !px-2 !py-1`}
+              className={`${btnCls(visible ? 'secondary' : 'primary', 'sm')} !h-7 !gap-1 !px-2`}
               aria-pressed={!visible}
               aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
               onClick={() => setSettings({ [VISIBLE_KEY[kind]]: !visible })}
@@ -156,7 +158,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
       {kind === 'logo' && (
         <div className="mt-3 flex items-center gap-2">
           <span className="text-xs font-medium text-stone-600">Color</span>
-          <div className="inline-flex flex-1 gap-0.5 rounded-lg border border-stone-200 bg-stone-100 p-0.5" role="group" aria-label="Logo color">
+          <div className="inline-flex flex-1 gap-1 rounded-[10px] bg-stone-200/50 p-1 ring-1 ring-inset ring-stone-200/70" role="group" aria-label="Logo color">
             {LOGO_COLORS.map((c) => {
               const active = a?.name === c.name
               return (
@@ -165,7 +167,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
                   type="button"
                   aria-pressed={active}
                   onClick={() => (c.key === 'black' ? resetAsset('logo') : setAssetUrl('logo', c.file, c.name))}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition ${active ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-brand'}`}
+                  className={`flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition ${active ? 'bg-brand text-white shadow-[0_1px_2px_rgba(210,32,38,0.3)]' : 'text-stone-600 hover:bg-white hover:text-stone-900'}`}
                 >
                   <span className={`h-3 w-3 rounded-full ${c.swatch}`} aria-hidden />
                   {c.label}
@@ -184,7 +186,7 @@ function AssetSlot({ kind, label, hint }: { kind: AssetKind; label: string; hint
 
 export function AssetsPanel() {
   return (
-    <Section title="Assets" icon={<ImageIcon className="h-4 w-4" />}>
+    <Section title="Assets" icon={<ImageIcon className="h-4 w-4" />} description="Artwork placed on every sticker. Upload or drop an SVG to replace one.">
       <AssetSlot kind="background" label="Background" hint={`Fitted inside the trim with one uniform scale. Gaps and bleed are filled from the artwork's edge colors. Default: ${DEFAULT_ASSETS.background.name}.`} />
       <AssetSlot kind="logo" label="Bakong logo" hint="Always scaled to 32 × 32 pt and centered on the QR." />
       <AssetSlot kind="corner" label="Corner frame" hint="Scaled to 154.3 pt square around the QR." />
@@ -205,13 +207,13 @@ export function DataPanel() {
   const colOptions = [{ value: -1, label: '— none —' }, ...(sheet?.headers.map((h, i) => ({ value: i, label: h })) ?? [])]
 
   return (
-    <Section title="Data" icon={<TableIcon className="h-4 w-4" />} badge={sheet ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand">{sheet.rows.length}</span> : null}>
+    <Section title="Data" icon={<TableIcon className="h-4 w-4" />} description="Where the merchant names, MIDs and QR codes come from." badge={sheet ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand">{sheet.rows.length}</span> : null}>
       <Field label="Source" group>
         <Segmented value={app.source} onChange={(v) => app.setSource(v)} options={[{ value: 'excel', label: 'Excel + QR files' }, { value: 'pdf', label: 'Generated PDF' }]} />
       </Field>
       {app.source === 'pdf' ? (
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">1</span>KHQR PDF</div>
+          <div className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-stone-900"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand-50 text-[11px] font-bold text-brand ring-1 ring-inset ring-brand/20">1</span>KHQR PDF</div>
           <DropZone onFiles={(f) => app.loadPdf(f[0])} accept={/\.pdf$/i}>
             <div className="mb-2 text-stone-500">
               {app.pdfBusy ? `Reading page ${app.pdfBusy[0]} of ${app.pdfBusy[1] || '…'}` : app.pdfSummary && app.workbookName ? app.workbookName : 'Drop a generated KHQR PDF here'}
@@ -230,7 +232,7 @@ export function DataPanel() {
         </div>
       ) : (
       <div>
-        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">1</span>Excel file</div>
+        <div className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-stone-900"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand-50 text-[11px] font-bold text-brand ring-1 ring-inset ring-brand/20">1</span>Excel file</div>
         <DropZone onFiles={(f) => app.loadWorkbook(f[0])} accept={/\.(xlsx|xls|xlsm|csv|ods)$/i}>
           <div className="mb-2 text-stone-500">{app.workbookName ?? 'Drop .xlsx / .xls / .csv here'}</div>
           <FileButton accept=".xlsx,.xls,.xlsm,.csv,.ods" onFiles={(f) => app.loadWorkbook(f[0])}>{app.workbookName ? 'Replace file' : 'Choose file'}</FileButton>
@@ -269,7 +271,7 @@ export function DataPanel() {
       )}
       {app.source === 'excel' && (<>
       <div>
-        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-stone-800"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand text-[11px] text-white">2</span>QR files</div>
+        <div className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-stone-900"><span className="grid h-5 w-5 place-items-center rounded-full bg-brand-50 text-[11px] font-bold text-brand ring-1 ring-inset ring-brand/20">2</span>QR files</div>
         <DropZone onFiles={(f) => app.addQrFiles(f)} accept={/\.(svg|png|jpe?g|webp)$/i}>
           <div className="mb-2 text-stone-500">
             {app.qrBusy ? `Processing ${app.qrBusy[0]} / ${app.qrBusy[1]}…` : realQr.length ? `${realQr.length} QR files loaded` : 'Drop SVG / PNG / JPG QR files here'}
@@ -330,7 +332,7 @@ function FontPicker({ script }: { script: FontScript }) {
   ]
   const label = script === 'latin' ? 'English' : 'Khmer'
   return (
-    <div {...drop.props} className={`rounded-xl border p-3 transition-colors ${drop.over ? 'border border-dashed border-brand bg-brand-50' : 'border-stone-200'}`}>
+    <div {...drop.props} className={`subcard transition-colors ${drop.over ? '!border-dashed !border-brand !bg-brand-50' : ''}`}>
       <Field label={`Merchant name font: ${label}`}>
         <Select value={value} onChange={(v) => set(script === 'latin' ? { nameFontLatin: v } : { nameFontKhmer: v })} options={options} />
       </Field>
@@ -353,7 +355,7 @@ export function TypographyPanel() {
   const typographyIsGuide = (Object.keys(guide) as (keyof typeof guide)[]).every((k) => JSON.stringify(s[k]) === JSON.stringify(guide[k]))
   const resetTypography = () => set(guide)
   return (
-    <Section title="Typography" icon={<TypeIcon className="h-4 w-4" />} defaultOpen={false} action={
+    <Section title="Typography" icon={<TypeIcon className="h-4 w-4" />} description="Fonts, sizes and limits for the merchant name and MID." defaultOpen={false} action={
       <button type="button" className={btnCls('secondary', 'sm')} disabled={typographyIsGuide} onClick={resetTypography} title="Reset fonts, sizes and limits to the guide values">
         <Reset className="h-3.5 w-3.5" />Reset
       </button>
@@ -399,7 +401,7 @@ export function PositionPanel() {
   const resetOne = (r: OffsetRole) => set({ offsets: { ...s.offsets, [r]: { x: 0, y: 0 } } })
   const resetAll = () => set({ offsets: zeroOffsets() })
   return (
-    <Section title="Position" icon={<Move className="h-4 w-4" />} defaultOpen={false} action={
+    <Section title="Position" icon={<Move className="h-4 w-4" />} description="Fine-tune where each element sits on the sticker." defaultOpen={false} action={
       <button type="button" className={btnCls('secondary', 'sm')} disabled={allZero} onClick={resetAll} title="Put every element back at its guide position">
         <Reset className="h-3.5 w-3.5" />Reset
       </button>
@@ -409,9 +411,9 @@ export function PositionPanel() {
       </Field>
       <p className="text-[11px] leading-snug text-stone-500">Shift from the guide position. X: + moves right, − left. Y: + moves down, − up. 1 mm = 2.835 pt.</p>
       {POSITION_ROWS.map(({ role, label, hint }) => (
-        <div key={role} className="rounded-xl border border-stone-200 p-3">
+        <div key={role} className="subcard">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-stone-800">{label}</span>
+            <span className="text-[13px] font-semibold text-stone-900">{label}</span>
             <button type="button" className={btnCls('ghost')} disabled={isZero(role)} onClick={() => resetOne(role)} aria-label={`Reset ${label} position`}>Reset</button>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -440,8 +442,9 @@ export function ExportPanel() {
   const set = useSettings((x) => x.set)
   const engineOpts = { pageSize: s.pageSize, customMm: s.customMm, bleed: false, bleedMm: 0, cropMarks: false, edgeFill: 'auto' as const }
   const qrSize = qrPrintSize(pageGeometry(engineOpts).stickerScale)
+  const inTabs = useContext(PlainSection)
   return (
-    <Section title="Export" icon={<FileOut className="h-4 w-4" />}>
+    <Section title="Export" icon={<FileOut className="h-4 w-4" />} description="Page size, bleed and how the PDF is delivered.">
       <Field label="Page size" hint="Artwork scales uniformly to fit, never stretched.">
         <Select value={s.pageSize} onChange={(v) => set({ pageSize: v })} options={PAGE_SIZES} />
       </Field>
@@ -466,7 +469,7 @@ export function ExportPanel() {
         <Segmented value={s.bleed ? 'bleed' : 'trim'} onChange={(v) => set({ bleed: v === 'bleed' })} options={[{ value: 'trim', label: 'No bleed (trimmed)' }, { value: 'bleed', label: 'With bleed' }]} />
       </Field>
       {s.bleed && (
-        <div className="space-y-2 rounded-md bg-stone-50 p-2">
+        <div className="subcard space-y-3">
           {!s.bleedPerSide ? (
             <Field label="Bleed" hint="Default 3 mm. 0–10 mm.">
               <NumberInput value={s.bleedMm} onChange={(v) => set({ bleedMm: v })} min={0} max={10} step={0.5} suffix="mm" />
@@ -486,7 +489,7 @@ export function ExportPanel() {
           </Field>
           {s.edgeFill === 'color' && (
             <div className="flex items-center gap-2">
-              <input type="color" value={s.edgeColor} onChange={(e) => set({ edgeColor: e.target.value })} className="h-8 w-10 cursor-pointer rounded border border-stone-300" aria-label="Bleed color" />
+              <input type="color" value={s.edgeColor} onChange={(e) => set({ edgeColor: e.target.value })} className="h-9 w-12 cursor-pointer rounded-lg border border-stone-200 bg-white p-1" aria-label="Bleed color" />
               <span className="font-mono text-xs text-stone-600">{s.edgeColor}</span>
             </div>
           )}
@@ -506,6 +509,13 @@ export function ExportPanel() {
       </Field>
       {s.output === 'split' && (
         <Field label="Pages per file"><NumberInput value={s.splitEvery} onChange={(v) => set({ splitEvery: Math.round(v) })} min={1} max={10000} /></Field>
+      )}
+      {/* In the tabbed panel the Export tab ends with the download; Flow has its own Download node. */}
+      {inTabs && (
+        <div className="rounded-[14px] border border-brand/15 bg-brand-50/50 p-3.5">
+          <div className="eyebrow mb-2.5 !text-brand">Get the PDF</div>
+          <ExportBar stacked />
+        </div>
       )}
     </Section>
   )

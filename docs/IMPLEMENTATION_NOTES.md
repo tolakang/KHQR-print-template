@@ -180,6 +180,12 @@ through the same factor.
   (`--color-canvas`); the preview, its warnings and the rows table share that canvas with no
   dividers. Header shows the KHQR wordmark (`public/artwork/khqr-logo.svg`, taken from a5.svg).
   Typography has a Reset button in its header. Preview zoom never goes below 50 % (Fit included).
+- **UI look** (Oct 2026): Inter Variable (self-hosted via `@fontsource-variable/inter`, so the CSP
+  `font-src 'self'` still holds); shared `card`, `subcard` and `eyebrow` utilities in `index.css`.
+  The preview is one card: toolbar (row, zoom, guides) on top, status (warnings, size) below.
+  The header has Download only; Download + Print also sit at the end of the Export tab (and in
+  the Flow Download node). Favicon: QR mark in brand red (`public/favicon.svg`, plus
+  `favicon-32.png` and a square `apple-touch-icon.png`). Flow wires: #8f8f99, 1.5 px.
 - **Settings tabs** (`src/ui/settingsTabs.tsx`): in Cards view the four sections share one
   panel with a tab bar (Assets · Data · Typography · Export; Data shows the row count). The
   open tab is remembered (`settingsTab` in the `khqr-ui` store). Panels render without their

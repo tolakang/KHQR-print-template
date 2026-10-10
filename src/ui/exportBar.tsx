@@ -38,7 +38,10 @@ function printPdf(bytes: Uint8Array) {
   document.body.appendChild(f)
 }
 
-/** Download / Print buttons with progress. `stacked` lays them out full width (Download node). */
+/**
+ * Download (header) or Download + Print with progress. `stacked` lays them out full width
+ * (Export tab and the Flow Download node).
+ */
 export function ExportBar({ stacked = false }: { stacked?: boolean } = {}) {
   const ready = useApp((s) => s.ready)
   const hasSheet = useApp((s) => s.sheets.length > 0)
@@ -126,9 +129,6 @@ export function ExportBar({ stacked = false }: { stacked?: boolean } = {}) {
             </span>
           )}
           {err && <span className="max-w-56 text-xs text-brand">{err}</span>}
-          <button type="button" className={btnCls('secondary')} disabled={!ready} onClick={() => run('print')} title="Opens the browser print dialog" aria-label="Print…">
-            <Printer className="h-4 w-4" /><span className="hidden sm:inline">Print…</span>
-          </button>
           <button type="button" className={btnCls('primary')} disabled={!ready} onClick={() => run('download')} aria-label={`Download PDF (${label})`}>
             <Download className="h-4 w-4" /><span className="hidden min-[400px]:inline">Download</span><span className="hidden sm:inline"> PDF</span> <span className="hidden font-medium opacity-80 sm:inline">({label})</span>
           </button>
